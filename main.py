@@ -12,7 +12,7 @@ This application can be used by game masters and players to quickly access
 character information for the Call of Cthulhu roleplaying game.
 
 Author: Unknown
-Version: 1.5.1
+Version: 1.6.0
 Last Updated: 2025-03-30
 """
 
@@ -222,8 +222,15 @@ def display_cache_stats(cache):
     """
     stats = cache.get_stats()
     print("\n--- Cache Status ---")
-    print(f"Characters in cache: {stats['size']}")
+    print(f"Characters in cache metadata: {stats['size']}")
+    print(f"Active entries in cache: {stats['active_entries']}")
+    print(f"Maximum cache size: {stats['max_size']}")
     print(f"Approximate memory usage: {stats['memory_usage']} bytes")
+
+    # Display hit rate statistics
+    total_accesses = stats.get('hits', 0) + stats.get('misses', 0)
+    if total_accesses > 0:
+        print(f"Cache hit rate: {stats.get('hit_rate', 0):.1f}% ({stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses)")
 
     if stats['size'] > 0:
         print("\nCached characters:")
@@ -518,8 +525,8 @@ def main():
     Returns:
         int: Exit code (0 for success, non-zero for errors)
     """
-    # Initialize the character cache
-    cache = CharacterCache()
+    # Initialize the character cache with a sensible maximum size
+    cache = CharacterCache(max_size=10)
 
     try:
         while True:
@@ -529,10 +536,11 @@ def main():
             print("2. Clear Character Cache")
             print("3. View Cache Status")
             print("4. Run Tests")
-            print("5. Exit")
+            print("5. Configure Cache Settings")
+            print("6. Exit")
 
             # Get user choice
-            choice = get_user_selection("\nEnter your choice (1-5): ", 1, 5)
+            choice = get_user_selection("\nEnter your choice (1-6): ", 1, 6)
 
             # Handle canceled selection
             if choice is None:
@@ -605,6 +613,10 @@ def main():
                 run_tests_menu()
 
             elif choice == 5:
+                # Configure cache settings
+                configure_cache_settings(cache)
+
+            elif choice == 6:
                 # Exit the application
                 print("Exiting program. Goodbye!")
                 break
@@ -616,6 +628,49 @@ def main():
         return 1
 
     return 0
+
+
+def configure_cache_settings(cache):
+    """
+    Allow user to configure cache settings.
+
+    Args:
+        cache (CharacterCache): The character cache instance
+
+    Returns:
+        None
+    """
+    print("\n=== Cache Configuration ===")
+    print(f"Current maximum cache size: {cache._max_size}")
+
+    # Get new cache size from user
+    try:
+        new_size = get_user_selection("Enter new maximum cache size (3-50, or 0 to cancel): ", 0, 50)
+
+        if new_size is None or new_size == 0:
+            print("Cache configuration canceled.")
+            return
+
+        # Update cache size
+        cache._max_size = new_size
+        print(f"Maximum cache size updated to {new_size}.")
+
+        # Note: We may need to enforce the new limit by clearing excess entries
+        current_size = len(cache._metadata)
+        if current_size > new_size:
+            # Remove oldest entries to meet new size
+            excess = current_size - new_size
+            for _ in range(excess):
+                if cache._metadata:
+                    # Remove least recently used item (first item in OrderedDict)
+                    cache._metadata.popitem(last=False)
+
+            print(f"Removed {excess} least recently used entries to meet new cache size limit.")
+
+    except (ValueError, TypeError):
+        print("Invalid input. Cache configuration canceled.")
+    except Exception as e:
+        print(f"Error configuring cache: {e}")                                                                                                                            
 
 
 if __name__ == "__main__":

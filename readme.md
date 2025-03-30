@@ -21,6 +21,8 @@ A character management application for the Call of Cthulhu roleplaying game syst
   - Success level determination (Extreme, Hard, Regular, Failure, Fumble)
 
 - **Performance Optimizations**
+  - **Memory-efficient caching with LRU eviction policy**
+  - **Configurable cache size limits for memory management**
   - **Optimized metadata loading with single-pass parsing**
   - **Proper context management for file operations**
   - Character data caching system
@@ -40,6 +42,7 @@ A character management application for the Call of Cthulhu roleplaying game syst
 2. Navigate through the menu-based interface
 3. Select characters to view their information
 4. Use the various tools and utilities as needed
+5. **Configure cache size to optimize memory usage**
 
 ## Technical Details
 
@@ -47,23 +50,32 @@ A character management application for the Call of Cthulhu roleplaying game syst
 - Modular architecture for easy extension
 - JSON-based character data format
 - No external dependencies required
+- **LRU (Least Recently Used) caching mechanism**
 
 ## Changelog
 
-### Version 1.5.2 (2025-03-30)
+### Version 1.6.0 (2025-03-30)
+- **Implemented memory-efficient caching with LRU eviction policy**
+- **Added configurable cache size limits**
+- **Improved memory management through automatic eviction of least-used entries**
+- **Added expanded cache statistics including hit-rate tracking**
+- **Enhanced cache configuration options in the main menu**
+- **Added tests for LRU eviction behavior**
+
+### Version 1.5.2 (2025-03-28)
 - Optimized character metadata loading with single-pass file parsing
 - Improved context management in CharacterCache to ensure proper file closing
 - Added dedicated test suites for optimized metadata loading and file handling
 - Updated test framework to include new test categories
 - Enhanced error handling throughout the application
 
-### Version 1.5.1 (2025-03-28)
+### Version 1.5.1 (2025-03-25)
 - Optimized lazy loading implementation to better leverage CharacterMetadata
 - Fixed character data loading to only load full content when explicitly needed
 - Added tests to verify lazy loading performance characteristics
 - Improved fallback handling for malformed character files
 
-### Version 1.5 (2025-03-25)
+### Version 1.5 (2025-03-20)
 - Added lazy loading optimization for character files
 - Created CharacterMetadata class for efficient character listing
 - Added unit tests for the CharacterMetadata implementation

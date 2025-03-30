@@ -5,33 +5,41 @@ This module provides a caching mechanism for character data, improving
 performance by reducing the need to repeatedly read character files from disk.
 
 The main class is CharacterCache, which handles:
-- Storing character data with modification timestamps
+- Storing character data with an LRU (Least Recently Used) eviction policy
 - Validating whether cached data is still current
 - Providing statistics about cache usage and memory consumption
 
 Author: Unknown
-Version: 1.1
+Version: 2.0
 Last Updated: 2025-03-30
 """
 
 import os
 import json
 import time
+from collections import OrderedDict
 
 
 class CharacterCache:
     """
-    A class to manage caching of character data with intelligent invalidation.
+    A class to manage caching of character data with intelligent invalidation and
+    memory optimization using an LRU eviction policy.
 
-    This cache stores character data along with the file modification time,
-    allowing it to determine when a cached entry is stale and needs to be reloaded.
+    This cache stores character data and implements an LRU policy to limit cache size,
+    automatically removing the least recently used entries when needed.
     """
 
-    def __init__(self):
+    def __init__(self, max_size=15):
         """
-        Initialize an empty character cache.
+        Initialize a character cache with memory optimization.
+
+        Args:
+            max_size (int): Maximum number of characters to keep in cache
         """
-        self._cache = {}  # Dictionary to store cached character data
+        self._cache = OrderedDict()  # Use OrderedDict for both cache and metadata
+        self._max_size = max_size
+        self._hits = 0
+        self._misses = 0
 
     def get(self, filename):
         """
@@ -45,17 +53,28 @@ class CharacterCache:
         """
         # Check if file is in cache
         if filename not in self._cache:
+            self._misses += 1
             return None
 
-        # Check if the cached version is still current using context manager
+        # Move to end of OrderedDict to mark as most recently used
+        entry = self._cache.pop(filename)
+        self._cache[filename] = entry
+
+        # Check if the cached version is still current
         try:
             current_mod_time = os.path.getmtime(filename)
-            if current_mod_time != self._cache[filename]["mod_time"]:
+            if current_mod_time != entry["mod_time"]:
                 # File has been modified since it was cached
+                del self._cache[filename]
+                self._misses += 1
                 return None
-            return self._cache[filename]["data"]
+
+            self._hits += 1
+            return entry["data"]
+
         except OSError:
             # If file can't be accessed, return None
+            self._misses += 1
             return None
 
     def put(self, filename, data):
@@ -70,13 +89,21 @@ class CharacterCache:
             bool: True if caching was successful, False otherwise
         """
         try:
+            # Enforce cache size limit with LRU eviction
+            if len(self._cache) >= self._max_size and filename not in self._cache:
+                # Remove the least recently used item (first item in OrderedDict)
+                self._cache.popitem(last=False)
+
+            # Update cache with file modification time
             mod_time = os.path.getmtime(filename)
             self._cache[filename] = {
                 "data": data,
                 "mod_time": mod_time,
                 "cached_time": time.time()
             }
+
             return True
+
         except OSError:
             return False
 
@@ -93,7 +120,7 @@ class CharacterCache:
         """
         if filename is None:
             # Clear the entire cache
-            self._cache = {}
+            self._cache.clear()
             return True
         elif filename in self._cache:
             # Remove specific file from cache
@@ -126,11 +153,15 @@ class CharacterCache:
                 - memory_usage: Approximate memory usage in bytes
                 - oldest_entry_age: Age of the oldest cache entry in seconds
                 - newest_entry_age: Age of the newest cache entry in seconds
+                - hit_rate: Percentage of successful cache retrievals
+                - max_size: Maximum cache size setting
         """
         stats = {
             "size": len(self._cache),
+            "active_entries": len(self._cache),  # Same as size for compatibility
             "files": list(self._cache.keys()),
-            "memory_usage": sum(len(str(item)) for item in self._cache.values())
+            "memory_usage": sum(len(str(item)) for item in self._cache.values()),
+            "max_size": self._max_size
         }
 
         # Calculate age of entries if cache is not empty
@@ -139,6 +170,12 @@ class CharacterCache:
             cache_times = [entry["cached_time"] for entry in self._cache.values()]
             stats["oldest_entry_age"] = current_time - min(cache_times)
             stats["newest_entry_age"] = current_time - max(cache_times)
+
+        # Calculate hit rate
+        total_accesses = self._hits + self._misses
+        stats["hit_rate"] = (self._hits / total_accesses * 100) if total_accesses > 0 else 0
+        stats["hits"] = self._hits
+        stats["misses"] = self._misses
 
         return stats
 
