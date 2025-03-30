@@ -6,13 +6,13 @@ It provides functionality to:
 - Load premade characters from JSON files
 - Display character information in a formatted way
 - Navigate through a menu-based interface
-- Run dice parser tests
+- Run various test suites for validation
 
 This application can be used by game masters and players to quickly access
 character information for the Call of Cthulhu roleplaying game.
 
 Author: Unknown
-Version: 1.3
+Version: 1.5
 Last Updated: 2025-03-30
 """
 
@@ -22,6 +22,7 @@ import os.path
 import sys
 import unittest
 from character_cache import CharacterCache
+from character_metadata import CharacterMetadata
 
 
 def validate_character_data(character_data):
@@ -144,12 +145,15 @@ def display_character(character_data):
     print("=" * 50 + "\n")
 
 
-def list_character_files():
+def list_character_metadata():
     """
-    List all character JSON files in the characters directory.
+    List all character metadata from JSON files in the characters directory.
+    
+    This is an optimized version that only loads minimal character information
+    necessary for displaying the character selection list.
 
     Returns:
-        list: List of character filenames, or empty list if directory not found
+        list: List of CharacterMetadata objects, or empty list if directory not found
             or no character files exist
     """
     try:
@@ -157,10 +161,13 @@ def list_character_files():
             print("Error: Characters directory not found!")
             return []
 
-        character_files = [f for f in os.listdir('characters') if f.endswith('.json')]
-        if not character_files:
+        # Load metadata for all character files
+        metadata_list = CharacterMetadata.load_all_from_directory('characters')
+        
+        if not metadata_list:
             print("No character files found in the characters directory!")
-        return character_files
+            
+        return metadata_list
     except PermissionError:
         print("Error: No permission to access the characters directory.")
         return []
@@ -230,6 +237,50 @@ def display_cache_stats(cache):
         print("\nNo characters in cache.")
 
 
+def run_tests_menu():
+    """
+    Display and handle the submenu for running various tests.
+    
+    Returns:
+        None
+    """
+    while True:
+        # Display test menu
+        print("\n=== Run Tests ===")
+        print("1. Run Dice Parser Tests")
+        print("2. Run Character Metadata Tests")
+        print("3. Run All Tests")
+        print("4. Back to Main Menu")
+        
+        # Get user choice
+        choice = get_user_selection("\nEnter your choice (1-4): ", 1, 4)
+        
+        # Handle canceled selection
+        if choice is None:
+            continue
+            
+        if choice == 1:
+            # Run dice parser tests
+            run_dice_parser_tests()
+        elif choice == 2:
+            # Run character metadata tests
+            run_character_metadata_tests()
+        elif choice == 3:
+            # Run all tests
+            print("\n=== Running All Tests ===\n")
+            run_dice_parser_tests()
+            run_character_metadata_tests()
+        elif choice == 4:
+            # Return to main menu
+            return
+            
+        # Wait for user to press Enter before continuing
+        try:
+            input("\nPress Enter to continue...")
+        except (KeyboardInterrupt, EOFError):
+            pass
+
+
 def run_dice_parser_tests():
     """
     Run the dice parser test suite.
@@ -284,6 +335,60 @@ def run_dice_parser_tests():
         print("\n" + "=" * 50)
 
 
+def run_character_metadata_tests():
+    """
+    Run the character metadata test suite.
+
+    This function loads and executes the tests defined in test_character_metadata.py.
+    It uses the unittest framework to discover and run the tests.
+
+    Returns:
+        bool: True if all tests passed, False otherwise
+    """
+    print("\n=== Running Character Metadata Tests ===\n")
+
+    try:
+        # Check if the test file exists
+        if not os.path.exists('test_character_metadata.py'):
+            print("Error: test_character_metadata.py not found!")
+            return False
+
+        # Import the test module
+        try:
+            import test_character_metadata
+        except ImportError:
+            print("Error: Failed to import test_character_metadata module.")
+            return False
+
+        # Create a test loader
+        loader = unittest.TestLoader()
+
+        # Load tests from the test module
+        test_suite = loader.loadTestsFromModule(test_character_metadata)
+
+        # Create a test runner
+        runner = unittest.TextTestRunner(verbosity=2)
+
+        # Run the tests
+        result = runner.run(test_suite)
+
+        # Print a summary
+        print("\n=== Test Summary ===")
+        print(f"Ran {result.testsRun} tests")
+        print(f"Failures: {len(result.failures)}")
+        print(f"Errors: {len(result.errors)}")
+        print(f"Skipped: {len(result.skipped)}")
+
+        # Return True if all tests passed
+        return len(result.failures) == 0 and len(result.errors) == 0
+
+    except Exception as e:
+        print(f"Error running character metadata tests: {e}")
+        return False
+    finally:
+        print("\n" + "=" * 50)
+
+
 def main():
     """
     Main menu function that handles user interaction with the application.
@@ -305,7 +410,7 @@ def main():
             print("1. View Premade Characters")
             print("2. Clear Character Cache")
             print("3. View Cache Status")
-            print("4. Run Dice Parser Tests")  # New option
+            print("4. Run Tests")  # Updated option for test submenu
             print("5. Exit")
 
             # Get user choice
@@ -316,26 +421,25 @@ def main():
                 continue
 
             if choice == 1:
-                # List character files
-                character_files = list_character_files()
-                if not character_files:
+                # List character metadata - LAZY LOADING OPTIMIZATION
+                character_metadata = list_character_metadata()
+                if not character_metadata:
                     continue
 
-                # Display list of available characters
+                # Display list of available characters with basic info
                 print("\n--- Available Characters ---")
-                for i, filename in enumerate(character_files, 1):
-                    # Format the name nicely by removing the file extension
-                    name = filename.replace('.json', '').capitalize()
-                    print(f"{i}. {name}")
+                for i, metadata in enumerate(character_metadata, 1):
+                    # Show basic metadata information
+                    print(f"{i}. {metadata.name} - {metadata.occupation} ({metadata.nationality})")
 
                 # Add option to return to main menu
-                print(f"{len(character_files) + 1}. Back to Main Menu")
+                print(f"{len(character_metadata) + 1}. Back to Main Menu")
 
                 # Let user select a character
                 selection = get_user_selection(
-                    f"\nSelect a character (1-{len(character_files) + 1}): ", 
+                    f"\nSelect a character (1-{len(character_metadata) + 1}): ", 
                     1, 
-                    len(character_files) + 1
+                    len(character_metadata) + 1
                 )
 
                 # Handle canceled selection
@@ -343,11 +447,11 @@ def main():
                     continue
 
                 # Handle valid character selection
-                if 1 <= selection <= len(character_files):
-                    # Load and display the selected character (now with caching)
-                    filename = os.path.join('characters', character_files[selection - 1])
+                if 1 <= selection <= len(character_metadata):
+                    # Now load the full character data only when selected
+                    selected_metadata = character_metadata[selection - 1]
                     try:
-                        character_data = load_character_from_json(filename, cache)
+                        character_data = load_character_from_json(selected_metadata.filename, cache)
                         if character_data:  # Check if load was successful
                             display_character(character_data)
                     except Exception as e:
@@ -375,20 +479,8 @@ def main():
                     pass
 
             elif choice == 4:
-                # Run dice parser tests
-                success = run_dice_parser_tests()
-
-                # Display a message based on test results
-                if success:
-                    print("\nAll tests passed successfully!")
-                else:
-                    print("\nSome tests failed. See the test output for details.")
-
-                # Wait for user to press Enter before returning to menu
-                try:
-                    input("\nPress Enter to continue...")
-                except (KeyboardInterrupt, EOFError):
-                    pass
+                # Display the tests submenu
+                run_tests_menu()
 
             elif choice == 5:
                 # Exit the application
