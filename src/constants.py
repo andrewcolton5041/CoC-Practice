@@ -117,3 +117,14 @@ TEST_MENU_OPTION_MAX = 6
 # UI Prompts
 PROMPT_CACHE_SIZE = f"Enter new maximum cache size ({CACHE_SIZE_MIN}-{CACHE_SIZE_MAX}, or {CACHE_SIZE_CANCEL} to cancel): "
 PROMPT_PRESS_ENTER = "Press Enter to continue..."
+
+
+# UI Prompts
+PROMPT_CACHE_SIZE = f"Enter new maximum cache size ({CACHE_SIZE_MIN}-{CACHE_SIZE_MAX}, or {CACHE_SIZE_CANCEL} to cancel): "
+PROMPT_PRESS_ENTER = "Press Enter to continue..."
+
+# Character Display Constants
+MAX_ATTRIBUTE_VALUE = 100
+HIGH_THRESHOLD = 0.75  # Attributes above 75% of max value are considered exceptional
+LOW_THRESHOLD = 0.25   # Attributes below 25% of max value are considered poor
+SEPARATOR_WIDTH = 50   # Width of separators in character display

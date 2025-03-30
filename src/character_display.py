@@ -3,7 +3,7 @@
 Handles formatting and displaying character information in a consistent way.
 """
 
-from constants import (
+from src.constants import (
     MAX_ATTRIBUTE_VALUE,
     HIGH_THRESHOLD,
     LOW_THRESHOLD,
@@ -12,6 +12,12 @@ from constants import (
 
 def format_attribute_value(value, max_value=MAX_ATTRIBUTE_VALUE):
     """Format an attribute value for display with visual indicators."""
+    # Ensure the value is converted to an integer
+    try:
+        value = int(value)
+    except (ValueError, TypeError):
+        return str(value)
+
     formatted_value = str(value)
     if value >= max_value * HIGH_THRESHOLD:
         formatted_value = f"{formatted_value} (Exceptional)"
@@ -25,50 +31,75 @@ def display_character(character_data):
         print("Error: No character data to display.")
         return
 
-    print("\n" + "=" * SEPARATOR_WIDTH)
-    print(f"Name: {character_data['name']}")
-    print(f"Age: {character_data.get('age', 'Unknown')}")
-    print(f"Occupation: {character_data.get('occupation', 'Unknown')}")
-    print(f"Nationality: {character_data.get('nationality', 'Unknown')}")
+    # Safely get values with default fallbacks
+def safe_get(data, key, default='Unknown'):
+    return str(data.get(key, default)) if data else default
 
+print("\n" + "=" * SEPARATOR_WIDTH)
+print(f"Name: {safe_get(character_data, 'name')}")
+print(f"Age: {safe_get(character_data, 'age')}")
+print(f"Occupation: {safe_get(character_data, 'occupation')}")
+print(f"Nationality: {safe_get(character_data, 'nationality')}")
+
+# Display Attributes
+attributes = character_data.get('attributes', {})
+if attributes:
     print("\n--- Attributes ---")
-    for attr, value in character_data.get('attributes', {}).items():
+    for attr, value in attributes.items():
         print(f"{attr}: {format_attribute_value(value)}")
 
-    if 'skills' in character_data:
-        print("\n--- Skills ---")
-        for skill, value in character_data['skills'].items():
-            print(f"{skill}: {value}")
+# Display Skills
+skills = character_data.get('skills', {})
+if skills:
+    print("\n--- Skills ---")
+    for skill, value in sorted(skills.items()):
+        print(f"{skill}: {value}")
 
-    if 'weapons' in character_data:
-        print("\n--- Weapons ---")
-        for weapon in character_data['weapons']:
-            print(
-                f"{weapon['name']} - Skill: {weapon['skill']} - Damage: {weapon['damage']}"
-            )
+# Display Weapons
+weapons = character_data.get('weapons', [])
+if weapons:
+    print("\n--- Weapons ---")
+    for weapon in weapons:
+        # Safely handle weapon details
+        name = weapon.get('name', 'Unknown Weapon')
+        skill = weapon.get('skill', 'N/A')
+        damage = weapon.get('damage', 'N/A')
+        print(f"{name} - Skill: {skill} - Damage: {damage}")
 
-    if 'backstory' in character_data:
-        print("\n--- Backstory ---")
-        print(character_data['backstory'])
+# Display Backstory
+backstory = safe_get(character_data, 'backstory')
+if backstory and backstory != 'Unknown':
+    print("\n--- Backstory ---")
+    print(backstory)
 
-    if 'description' in character_data:
-        print("\n--- Description ---")
-        print(character_data['description'])
+# Display Description
+description = safe_get(character_data, 'description')
+if description and description != 'Unknown':
+    print("\n--- Description ---")
+    print(description)
 
-    if 'traits' in character_data:
-        print("\n--- Traits ---")
-        print(character_data['traits'])
+# Display Traits
+traits = safe_get(character_data, 'traits')
+if traits and traits != 'Unknown':
+    print("\n--- Traits ---")
+    print(traits)
 
-    if 'ideology' in character_data:
-        print("\n--- Ideology/Beliefs ---")
-        print(character_data['ideology'])
+# Display Ideology
+ideology = safe_get(character_data, 'ideology')
+if ideology and ideology != 'Unknown':
+    print("\n--- Ideology/Beliefs ---")
+    print(ideology)
 
-    if 'treasuredPossession' in character_data:
-        print("\n--- Treasured Possession ---")
-        print(character_data['treasuredPossession'])
+# Display Treasured Possession
+treasured_possession = safe_get(character_data, 'treasuredPossession')
+if treasured_possession and treasured_possession != 'Unknown':
+    print("\n--- Treasured Possession ---")
+    print(treasured_possession)
 
-    if 'notes' in character_data:
-        print("\n--- Notes ---")
-        print(character_data['notes'])
+# Display Notes
+notes = safe_get(character_data, 'notes')
+if notes and notes != 'Unknown':
+    print("\n--- Notes ---")
+    print(notes)
 
-    print("=" * SEPARATOR_WIDTH + "\n")
+print("=" * SEPARATOR_WIDTH + "\n")
