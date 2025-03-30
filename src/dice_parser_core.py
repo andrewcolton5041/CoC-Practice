@@ -8,29 +8,29 @@ The module focuses on efficiently breaking down dice expressions into tokens
 that can be evaluated according to standard RPG rules.
 
 Author: Unknown
-Version: 4.0
+Version: 4.1
 Last Updated: 2025-03-30
 """
 
 import random
 import operator
 import re
-from typing import List, Tuple, Union, Optional
+from typing import List, Tuple, Union, Optional, Any
 
 from src.dice_parser_exceptions import (
     TokenizationError, 
     ValidationError, 
-    LimitExceededError, 
-    RollError
+    RollError, 
+    LimitExceededError
 )
 
 
 class DiceParserCore:
     """
-    A class for parsing and performing basic tokenization of dice notation expressions.
+    A class for parsing and performing tokenization of dice notation expressions.
 
-    This parser uses regex-based tokenization to efficiently handle dice expressions,
-    breaking them down into components for further evaluation.
+    This parser uses regex-based tokenization and a stack-based parsing approach 
+    to efficiently handle dice expressions.
     """
 
     # Configuration constants for parsing limits
@@ -39,18 +39,30 @@ class DiceParserCore:
     MAX_DICE_SIDES = 1000  # Maximum number of sides on a die
 
     def __init__(self):
-        """Initialize the dice parser with operator maps."""
-        # Define operator mappings
+        """Initialize the dice parser with operator maps and deterministic random generator."""
+        # Define operator mappings with their functions and precedence
         self.operators = {
-            '+': operator.add,
-            '-': operator.sub,
-            '*': operator.mul,
-            '/': operator.floordiv  # Integer division for dice rolls
+            '+': (operator.add, 1),
+            '-': (operator.sub, 1),
+            '*': (operator.mul, 2),
+            '/': (operator.floordiv, 2)  # Integer division for dice rolls
         }
-        # For tracking deterministic values
-        self._next_deterministic_value = 0
+        # Deterministic random number generator
+        self._det_rng = random.Random(42)  # Fixed seed for deterministic mode
 
-    def tokenize(self, dice_string: str) -> List[Tuple[str, Union[int, str]]]:
+    def _deterministic_roll(self, sides: int) -> int:
+        """
+        Generate a deterministic roll for a die with given number of sides.
+
+        Args:
+            sides (int): Number of sides on the die
+
+        Returns:
+            int: A deterministic roll value
+        """
+        return self._det_rng.randint(1, sides)
+
+    def tokenize(self, dice_string: str) -> List[Tuple[str, Union[int, Tuple[int, int], str]]]:
         """
         Convert a dice string into tokens for processing using regex matching.
 
@@ -79,7 +91,7 @@ class DiceParserCore:
         dice_string = dice_string.replace(' ', '').upper()
 
         # Initialize tokens list
-        tokens = []
+        tokens: List[Tuple[str, Union[int, Tuple[int, int], str]]] = []
 
         # Define regex patterns for different token types
         dice_pattern = r'(\d+)D(\d+)'  # For dice notation like 3D6
@@ -165,7 +177,91 @@ class DiceParserCore:
                 dice_string
             ) from e
 
-    def validate_tokens(self, tokens: List[Tuple[str, Union[int, str]]]) -> None:
+    def parse(self, tokens: List[Tuple[str, Any]], deterministic: bool = False) -> int:
+        """
+        Parse and evaluate a sequence of tokens using a stack-based approach.
+
+        Args:
+            tokens (list): Tokens from tokenize method
+            deterministic (bool): Use deterministic mode if True
+
+        Returns:
+            int: Result of the dice expression
+        """
+        # Validate tokens first
+        self.validate_tokens(tokens)
+
+        # Reset deterministic random number generator if in deterministic mode
+        if deterministic:
+            self._det_rng = random.Random(42)
+
+        # Prepare stacks for parsing
+        value_stack = []
+        operator_stack = []
+
+        # Helper function to apply an operator
+        def apply_operator():
+            if len(value_stack) < 2 or not operator_stack:
+                raise ValidationError("Invalid expression: insufficient values for operator")
+
+            right = value_stack.pop()
+            left = value_stack.pop()
+            op_func, _ = self.operators[operator_stack.pop()]
+            value_stack.append(op_func(left, right))
+
+        # Process tokens
+        for token_type, token_value in tokens:
+            if token_type == 'NUMBER':
+                value_stack.append(token_value)
+
+            elif token_type == 'DICE':
+                # Roll dice
+                count, sides = token_value
+
+                # Use deterministic or random roll
+                if deterministic:
+                    # Deterministic roll
+                    result = sum(self._deterministic_roll(sides) for _ in range(count))
+                else:
+                    # Random roll
+                    result = sum(random.randint(1, sides) for _ in range(count))
+
+                value_stack.append(result)
+
+            elif token_type == 'OPERATOR':
+                # Handle operator precedence
+                while (operator_stack and 
+                       operator_stack[-1] != '(' and 
+                       self.operators[str(operator_stack[-1])][1] >= self.operators[str(token_value)][1]):
+                    apply_operator()
+                operator_stack.append(token_value)
+
+            elif token_type == 'LPAREN':
+                operator_stack.append(token_value)
+
+            elif token_type == 'RPAREN':
+                # Evaluate everything inside the parentheses
+                while operator_stack and operator_stack[-1] != '(':
+                    apply_operator()
+
+                # Remove the left parenthesis
+                if not operator_stack or operator_stack[-1] != '(':
+                    raise ValidationError("Mismatched parentheses")
+                operator_stack.pop()
+
+        # Apply any remaining operators
+        while operator_stack:
+            if operator_stack[-1] == '(':
+                raise ValidationError("Unbalanced parentheses")
+            apply_operator()
+
+        # Final result should be the only item left in value stack
+        if len(value_stack) != 1:
+            raise ValidationError("Invalid expression: too many values")
+
+        return value_stack[0]
+
+    def validate_tokens(self, tokens: List[Tuple[str, Any]]) -> None:
         """
         Validate a sequence of tokens to ensure they form a valid dice expression.
 
@@ -233,6 +329,24 @@ class DiceParserCore:
                         tokens=tokens,
                         error_type='missing_operand'
                     )
+
+                # Additional validation for DICE token
+                if token_type == 'DICE':
+                    if not isinstance(token_value, tuple) or len(token_value) != 2:
+                        raise ValidationError(
+                            f"Invalid DICE token structure at position {i}",
+                            tokens=tokens,
+                            error_type='invalid_dice_token'
+                        )
+
+                    count, sides = token_value
+                    if not isinstance(count, int) or not isinstance(sides, int):
+                        raise ValidationError(
+                            f"DICE token must have integer values at position {i}",
+                            tokens=tokens,
+                            error_type='invalid_dice_values'
+                        )
+
                 expect_value = False
             else:
                 # We expect an operator
@@ -260,95 +374,3 @@ class DiceParserCore:
                 tokens=tokens,
                 error_type='missing_operand'
             )
-
-    def parse(self, tokens: List[Tuple[str, Union[int, str]]], deterministic: bool = False) -> int:
-        """
-        Parse and evaluate a sequence of tokens.
-
-        Args:
-            tokens (list): Tokens from tokenize method
-            deterministic (bool): Use deterministic mode if True
-
-        Returns:
-            int: Result of the dice expression
-        """
-        # Validate tokens first
-        self.validate_tokens(tokens)
-
-        def evaluate_sequence(token_seq):
-            values = []
-            operators_seq = []
-
-            i = 0
-            while i < len(token_seq):
-                token_type, token_value = token_seq[i]
-
-                if token_type == 'NUMBER':
-                    values.append(token_value)
-                elif token_type == 'DICE':
-                    # Roll the dice
-                    count, sides = token_value
-
-                    if deterministic:
-                        # Use deterministic values when specified
-                        result = sum([(self._next_deterministic_value % sides) + 1 for _ in range(count)])
-                        self._next_deterministic_value += 1
-                    else:
-                        # Use random rolls
-                        result = sum(random.randint(1, sides) for _ in range(count))
-
-                    values.append(result)
-                elif token_type == 'OPERATOR':
-                    operators_seq.append(token_value)
-                elif token_type == 'LPAREN':
-                    # Find matching parenthesis
-                    paren_level = 1
-                    j = i + 1
-
-                    while j < len(token_seq) and paren_level > 0:
-                        if token_seq[j][0] == 'LPAREN':
-                            paren_level += 1
-                        elif token_seq[j][0] == 'RPAREN':
-                            paren_level -= 1
-                        j += 1
-
-                    if paren_level > 0:
-                        raise ValidationError(
-                            "Mismatched parentheses", 
-                            error_type='unbalanced_parentheses'
-                        )
-
-                    # Evaluate sub-expression
-                    sub_expr = token_seq[i+1:j-1]
-                    values.append(evaluate_sequence(sub_expr))
-                    i = j
-                    continue
-
-                i += 1
-
-            # Validate expression
-            if not values:
-                raise ValidationError(
-                    "No values in expression", 
-                    error_type='missing_operand'
-                )
-
-            if len(values) != len(operators_seq) + 1:
-                raise ValidationError(
-                    "Mismatched number of values and operators",
-                    error_type='invalid_token_sequence'
-                )
-
-            # Calculate result
-            result = values[0]
-            for i, op in enumerate(operators_seq):
-                result = self.operators[op](result, values[i+1])
-
-            return result
-
-        # Start with a deterministic seed to ensure reproducibility if needed
-        if deterministic:
-            self._next_deterministic_value = 0
-            random.seed(42)  # Use a fixed seed for deterministic mode
-
-        return evaluate_sequence(tokens)

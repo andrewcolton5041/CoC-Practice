@@ -8,11 +8,11 @@ Exceptions are designed to give precise information about parsing errors,
 helping developers and users understand exactly what went wrong.
 
 Author: Unknown
-Version: 4.0
+Version: 4.1
 Last Updated: 2025-03-30
 """
 
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Any, Dict, Tuple
 
 
 class DiceParserError(Exception):
@@ -25,7 +25,7 @@ class DiceParserError(Exception):
     def __init__(self, 
                  message: str, 
                  dice_string: Optional[str] = None,
-                 context: Optional[dict] = None):
+                 context: Optional[Dict[str, Any]] = None):
         """
         Initialize the base dice parser error.
 
@@ -83,13 +83,16 @@ class ValidationError(DiceParserError):
         'invalid_token_sequence',
         'missing_operand',
         'invalid_operator_placement',
-        'empty_parentheses'
+        'empty_parentheses',
+        'invalid_dice_token',
+        'invalid_dice_values',
+        'missing_tokens'
     ]
 
     def __init__(self, 
                  message: str, 
                  dice_string: Optional[str] = None,
-                 tokens: Optional[List[tuple]] = None,
+                 tokens: Optional[List[Tuple[str, Any]]] = None,
                  error_type: Optional[str] = None):
         """
         Initialize the validation error.
