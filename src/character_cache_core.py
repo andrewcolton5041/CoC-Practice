@@ -5,11 +5,12 @@ This module provides the core caching mechanism for character data,
 focusing on the fundamental caching operations and least recently used (LRU) policy.
 
 Author: Unknown
-Version: 2.2
+Version: 2.3
 Last Updated: 2025-03-30
 """
 
 import time
+import functools
 from collections import OrderedDict
 from typing import Dict, Any, Tuple, Optional, Callable
 
@@ -62,11 +63,13 @@ class CharacterCache:
             self._cache_stats.record_miss()
             return None
 
-        entry = self._cache.pop(filename)
-        self._cache[filename] = entry
+        # Use move_to_end() instead of pop/re-add pattern for better efficiency
+        self._cache.move_to_end(filename)
+        entry = self._cache[filename]
 
         try:
-            current_mod_time = get_file_modification_time(filename)
+            # Check if file has been modified using lru_cached function
+            current_mod_time = self._get_file_mod_time(filename)
             if current_mod_time is None or current_mod_time != entry[KEY_MOD_TIME]:
                 del self._cache[filename]
                 self._misses += 1
@@ -82,6 +85,19 @@ class CharacterCache:
             self._cache_stats.record_miss()
             return None
 
+    @functools.lru_cache(maxsize=128)
+    def _get_file_mod_time(self, filename: str) -> Optional[float]:
+        """
+        Get file modification time with caching for performance.
+
+        Args:
+            filename (str): Path to the file
+
+        Returns:
+            float or None: Modification time or None if file doesn't exist
+        """
+        return get_file_modification_time(filename)
+
     def put(self, filename: str, data: Dict[str, Any]) -> bool:
         """
         Add or update character data in the cache.
@@ -94,11 +110,12 @@ class CharacterCache:
             bool: True if caching was successful, False otherwise
         """
         try:
+            # Evict least recently used item if cache is full
             if len(self._cache) >= self._max_size and filename not in self._cache:
                 self._cache.popitem(last=False)
                 self._cache_stats.record_eviction()
 
-            mod_time = get_file_modification_time(filename)
+            mod_time = self._get_file_mod_time(filename)
             if mod_time is None:
                 return False
 
@@ -108,12 +125,14 @@ class CharacterCache:
                 KEY_CACHE_TIME: time.time()
             }
 
+            # Move this entry to the end to mark as most recently used
+            self._cache.move_to_end(filename)
             return True
 
         except Exception:
             return False
 
-    def invalidate(self, filename: str = None) -> bool:
+    def invalidate(self, filename: Optional[str] = None) -> bool:
         """
         Invalidate entries in the cache.
 
@@ -125,9 +144,13 @@ class CharacterCache:
         """
         if filename is None:
             self._cache.clear()
+            # Also clear the file mod time cache
+            self._get_file_mod_time.cache_clear()
             return True
         elif filename in self._cache:
             del self._cache[filename]
+            # Invalidate specific file in mod time cache
+            self._get_file_mod_time.cache_clear()
             return True
         else:
             return False
@@ -144,6 +167,22 @@ class CharacterCache:
         """
         return filename in self._cache
 
+    @functools.lru_cache(maxsize=32)
+    def _cached_validation(self, data_tuple: Tuple, validation_function: Callable) -> bool:
+        """
+        Cached validation using immutable data representation.
+
+        Args:
+            data_tuple: Tuple representation of data for cache key
+            validation_function: Function to validate the data
+
+        Returns:
+            bool: True if valid, False otherwise
+        """
+        # Convert back to dictionary for validation
+        # (This is just for the cache key - the actual data isn't modified)
+        return validation_function(dict(data_tuple))
+
     def load_character(self, filename: str, validation_function: Optional[Callable] = None) -> Tuple[Optional[Dict[str, Any]], str]:
         """
         Load a character from the cache or from disk if not cached.
@@ -158,8 +197,11 @@ class CharacterCache:
         """
         cached_data = self.get(filename)
         if cached_data:
-            if validation_function and not validation_function(cached_data):
-                return None, STATUS_VALIDATION_FAILED
+            if validation_function:
+                # Convert dict to tuple of items for caching
+                cached_items = tuple(sorted(cached_data.items()))
+                if not self._cached_validation(cached_items, validation_function):
+                    return None, STATUS_VALIDATION_FAILED
             return cached_data, STATUS_CACHE_HIT
 
         character_data, status = read_json_file(filename)
@@ -167,8 +209,10 @@ class CharacterCache:
         if status != "success":
             return None, status
 
-        if validation_function and not validation_function(character_data):
-            return None, STATUS_VALIDATION_FAILED
+        if validation_function:
+            character_items = tuple(sorted(character_data.items()))
+            if not self._cached_validation(character_items, validation_function):
+                return None, STATUS_VALIDATION_FAILED
 
         self.put(filename, character_data)
         return character_data, STATUS_LOADED_FROM_FILE

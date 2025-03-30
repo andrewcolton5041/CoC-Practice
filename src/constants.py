@@ -159,3 +159,30 @@ MAX_ATTRIBUTE_VALUE = 100
 HIGH_THRESHOLD = 0.75  # Attributes above 75% of max value are considered exceptional
 LOW_THRESHOLD = 0.25   # Attributes below 25% of max value are considered poor
 SEPARATOR_WIDTH = 50   # Width of separators in character display
+
+# === Dice Memoization Test Constants ===
+TEST_MEMO_DICE_ITERATIONS = 1000    # Number of iterations for memoization performance tests
+TEST_MEMO_DICE_TYPES = ["1D20", "3D6", "2D10+5", "(1D6+2)*3"]  # Common dice patterns to test
+TEST_MEMO_COMPARISON_THRESHOLD = 3.0  # Minimum speedup factor expected with memoization
+TEST_MEMO_LARGE_DICE_COUNT = 50     # Number of dice in large dice roll tests
+TEST_MEMO_TIMEOUT_SECONDS = 2.0     # Maximum time allowed for memoization tests
+TEST_MEMO_MIN_HIT_RATE = 80.0       # Minimum hit rate percentage expected
+
+# === Cache Performance Test Constants ===
+TEST_CACHE_ITERATIONS = 1000       # Number of iterations for cache performance tests
+TEST_CACHE_WARMUP_ITERATIONS = 100  # Warmup iterations before measuring performance
+TEST_CACHE_TYPES = ["character", "metadata", "dice", "file"]  # Cache types to test
+TEST_CACHE_COMPARISON_THRESHOLD = 2.0  # Minimum speedup factor expected with caching
+TEST_CACHE_MIN_HIT_RATE = 75.0    # Minimum hit rate percentage expected
+TEST_CACHE_TIMEOUT_SECONDS = 5.0  # Maximum time allowed for cache tests
+TEST_CACHE_FILE_COUNT = 20        # Number of files to use in file cache tests
+TEST_CACHE_STRESS_FACTOR = 5      # Factor to multiply iterations for stress tests
+
+# === Cache Benchmarking Constants ===
+BENCH_ITERATIONS = 1000          # Default number of iterations for benchmarks
+BENCH_WARMUP_ITERATIONS = 100    # Warmup iterations before measuring
+BENCH_MIN_SPEEDUP = 1.5          # Minimum speedup factor to consider caching effective
+BENCH_REPORT_DECIMAL_PLACES = 2  # Decimal places in benchmark reports
+BENCH_SMALL_SAMPLE = 10          # Small sample size for quick benchmarks
+BENCH_MEDIUM_SAMPLE = 50         # Medium sample size for standard benchmarks
+BENCH_LARGE_SAMPLE = 200         # Large sample size for thorough benchmarks
