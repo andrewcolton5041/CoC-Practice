@@ -12,8 +12,8 @@ Major functions include:
 These functions implement game mechanics based on Call of Cthulhu 7th edition rules.
 
 Author: Unknown
-Version: 1.0
-Last Updated: Unknown
+Version: 1.1
+Last Updated: 2025-03-30
 """
 
 import dice_roll as dr
@@ -164,4 +164,4 @@ def roll_damage(weapon_data):
             return dr.roll_dice(base_damage) + bonus_damage
         else:
             # Return the formula string if we can't parse it
-            return damage_formula
+        return damage_formula

@@ -11,8 +11,8 @@ The module provides functions for:
 These functions follow the 7th edition Call of Cthulhu rules.
 
 Author: Unknown
-Version: 1.0
-Last Updated: Unknown
+Version: 1.1
+Last Updated: 2025-03-30
 """
 
 import dice_roll as dr

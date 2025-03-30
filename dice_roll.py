@@ -8,11 +8,9 @@ The module can handle various dice formats including:
 - Basic rolls:         "3D6" or "1D20+3" or "4D4-1" 
 - Parenthetical rolls: "(2D6+6)*5" or "(3D4-2)*2"
 
-Each function is documented with its purpose, parameters, and return values.
-
 Author: Unknown
-Version: 1.0
-Last Updated: Unknown
+Version: 1.1
+Last Updated: 2025-03-30
 """
 
 import re
