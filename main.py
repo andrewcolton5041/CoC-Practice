@@ -6,12 +6,13 @@ It provides functionality to:
 - Load premade characters from JSON files
 - Display character information in a formatted way
 - Navigate through a menu-based interface
+- Run dice parser tests
 
 This application can be used by game masters and players to quickly access
 character information for the Call of Cthulhu roleplaying game.
 
 Author: Unknown
-Version: 1.2
+Version: 1.3
 Last Updated: 2025-03-30
 """
 
@@ -19,6 +20,7 @@ import os
 import json
 import os.path
 import sys
+import unittest
 from character_cache import CharacterCache
 
 
@@ -228,6 +230,60 @@ def display_cache_stats(cache):
         print("\nNo characters in cache.")
 
 
+def run_dice_parser_tests():
+    """
+    Run the dice parser test suite.
+
+    This function loads and executes the tests defined in test_dice_parser.py.
+    It uses the unittest framework to discover and run the tests.
+
+    Returns:
+        bool: True if all tests passed, False otherwise
+    """
+    print("\n=== Running Dice Parser Tests ===\n")
+
+    try:
+        # Check if the test file exists
+        if not os.path.exists('test_dice_parser.py'):
+            print("Error: test_dice_parser.py not found!")
+            return False
+
+        # Import the test module
+        try:
+            import test_dice_parser
+        except ImportError:
+            print("Error: Failed to import test_dice_parser module.")
+            return False
+
+        # Create a test loader
+        loader = unittest.TestLoader()
+
+        # Load tests from the test module
+        test_suite = loader.loadTestsFromModule(test_dice_parser)
+
+        # Create a test runner
+        runner = unittest.TextTestRunner(verbosity=2)
+
+        # Run the tests
+        result = runner.run(test_suite)
+
+        # Print a summary
+        print("\n=== Test Summary ===")
+        print(f"Ran {result.testsRun} tests")
+        print(f"Failures: {len(result.failures)}")
+        print(f"Errors: {len(result.errors)}")
+        print(f"Skipped: {len(result.skipped)}")
+
+        # Return True if all tests passed
+        return len(result.failures) == 0 and len(result.errors) == 0
+
+    except Exception as e:
+        print(f"Error running dice parser tests: {e}")
+        return False
+    finally:
+        print("\n" + "=" * 50)
+
+
 def main():
     """
     Main menu function that handles user interaction with the application.
@@ -249,10 +305,11 @@ def main():
             print("1. View Premade Characters")
             print("2. Clear Character Cache")
             print("3. View Cache Status")
-            print("4. Exit")
+            print("4. Run Dice Parser Tests")  # New option
+            print("5. Exit")
 
             # Get user choice
-            choice = get_user_selection("\nEnter your choice (1-4): ", 1, 4)
+            choice = get_user_selection("\nEnter your choice (1-5): ", 1, 5)
 
             # Handle canceled selection
             if choice is None:
@@ -318,6 +375,22 @@ def main():
                     pass
 
             elif choice == 4:
+                # Run dice parser tests
+                success = run_dice_parser_tests()
+
+                # Display a message based on test results
+                if success:
+                    print("\nAll tests passed successfully!")
+                else:
+                    print("\nSome tests failed. See the test output for details.")
+
+                # Wait for user to press Enter before returning to menu
+                try:
+                    input("\nPress Enter to continue...")
+                except (KeyboardInterrupt, EOFError):
+                    pass
+
+            elif choice == 5:
                 # Exit the application
                 print("Exiting program. Goodbye!")
                 break

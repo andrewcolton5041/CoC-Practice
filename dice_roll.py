@@ -2,20 +2,22 @@
 Dice Roller Utility for Call of Cthulhu RPG
 
 This module provides functionality to parse and evaluate dice notation strings
-commonly used in tabletop RPGs like Call of Cthulhu.
+commonly used in tabletop RPGs like Call of Cthulhu. It uses a robust
+token-based parser instead of complex regular expressions.
 
 The module can handle various dice formats including:
 - Basic rolls:         "3D6" or "1D20+3" or "4D4-1" 
 - Parenthetical rolls: "(2D6+6)*5" or "(3D4-2)*2"
 
 Author: Unknown
-Version: 1.1
+Version: 2.0
 Last Updated: 2025-03-30
 """
 
-import re
-import random
-import operator
+from dice_parser import DiceParser
+
+# Create a singleton instance of the DiceParser
+_parser = DiceParser()
 
 
 def roll_dice(dice_string):
@@ -36,45 +38,44 @@ def roll_dice(dice_string):
     Raises:
         ValueError: If the input dice string format is invalid or cannot be parsed.
     """
-    # Regular expression pattern to match dice notation with or without parentheses and multiplier
-    # The pattern is verbose to handle complex dice expressions
-    pattern = r"""
-        ^\(\s*(\d+)D(\d+)\s*(?:([+\-*])\s*(\d+))?\)\s*\*\s*(\d+)$   # With parentheses and outer *
-        |^(\d+)D(\d+)\s*(?:([+\-*])\s*(\d+))?$                     # Simple format
+    return _parser.roll_dice(dice_string)
+
+
+def roll_dice_with_details(dice_string):
     """
-    # Attempt to match the dice string against our pattern
-    match = re.fullmatch(pattern, dice_string.strip(), flags=re.IGNORECASE | re.VERBOSE)
+    Roll dice and return both the total and individual die results.
 
-    # If no match, the format is invalid
-    if not match:
-        raise ValueError("Invalid dice string format")
+    This is useful for systems that need to know the individual die results,
+    such as critical hit determination in some RPG systems.
 
-    # Determine which pattern matched and extract the relevant components
-    if match.group(1):  # Match with parentheses and outer multiplier
-        num_dice = int(match.group(1))      # Number of dice to roll
-        dice_sides = int(match.group(2))    # Number of sides on each die
-        op = match.group(3)                 # Operator for modifier (+, -, *)
-        modifier = int(match.group(4)) if match.group(4) else 0  # Numeric modifier
-        multiplier = int(match.group(5))    # Outer multiplier
-    else:  # Simple format without outer multiplier
-        num_dice = int(match.group(6))      # Number of dice to roll
-        dice_sides = int(match.group(7))    # Number of sides on each die
-        op = match.group(8)                 # Operator for modifier
-        modifier = int(match.group(9)) if match.group(9) else 0  # Numeric modifier
-        multiplier = 1                      # Default multiplier (no effect)
+    Args:
+        dice_string (str): A simple dice notation (e.g., "3d6")
 
-    # Roll the specified number of dice with the given sides
-    rolls = [random.randint(1, dice_sides) for _ in range(num_dice)]
-    total = sum(rolls)
+    Returns:
+        tuple: (total, individual_rolls)
 
-    # Map operators to their corresponding functions
-    ops = {'+': operator.add, '-': operator.sub, '*': operator.mul}
+    Raises:
+        ValueError: If the dice string is not a simple dice roll
+    """
+    return _parser.roll_dice_with_details(dice_string)
 
-    # Apply inner operator if present
-    if op in ops:
-        total = ops[op](total, modifier)
 
-    # Apply outer multiplier
-    total *= multiplier
+# Keep the original function signature for backwards compatibility
+def roll_dice_original(dice_string):
+    """
+    Original dice rolling function kept for backwards compatibility.
+    Uses the new parser internally.
 
-    return total
+    This function has the same signature and behavior as the original
+    roll_dice function, but uses the new parser for better reliability.
+
+    Args:
+        dice_string (str): A string representing dice to roll in standard RPG notation.
+
+    Returns:
+        int: The final calculated result of the dice roll expression.
+
+    Raises:
+        ValueError: If the input dice string format is invalid or cannot be parsed.
+    """
+    return roll_dice(dice_string)

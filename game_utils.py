@@ -12,7 +12,7 @@ Major functions include:
 These functions implement game mechanics based on Call of Cthulhu 7th edition rules.
 
 Author: Unknown
-Version: 1.1
+Version: 1.2
 Last Updated: 2025-03-30
 """
 
@@ -150,18 +150,23 @@ def roll_damage(weapon_data):
         int or str: The calculated damage result or the damage formula if it can't be calculated
     """
     try:
-        # Try to directly roll the damage formula
-        return dr.roll_dice(weapon_data['damage'])
-    except ValueError:
-        # Handle damage formulas that might involve damage bonus
+        # Try to roll the damage directly using the new parser
         damage_formula = weapon_data['damage']
 
-        # Special handling for common damage bonus pattern
+        # Handle common damage bonus pattern
         if '+1D4' in damage_formula:
-            # Split the formula and roll parts separately
-            base_damage = damage_formula.replace('+1D4', '')
+            # Split formula at the bonus
+            parts = damage_formula.split('+1D4')
+            base_formula = parts[0]
+
+            # Roll the base damage and bonus separately
+            base_damage = dr.roll_dice(base_formula)
             bonus_damage = dr.roll_dice('1D4')
-            return dr.roll_dice(base_damage) + bonus_damage
+
+            return base_damage + bonus_damage
         else:
-            # Return the formula string if we can't parse it
-        return damage_formula
+            # Use the new parser for standard formulas
+            return dr.roll_dice(damage_formula)
+    except ValueError:
+        # If parsing fails, return the original formula
+        return weapon_data['damage']
