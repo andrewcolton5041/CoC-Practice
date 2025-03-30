@@ -11,7 +11,7 @@ Key Features:
 - Flexible cache management
 
 Author: Unknown
-Version: 3.1
+Version: 3.2
 Last Updated: 2025-03-30
 """
 
@@ -20,9 +20,14 @@ import inspect
 import sys
 import time
 from collections import OrderedDict
+from typing import Dict, Any, Optional, Union, List, Tuple
+
 from src.dice_parser_core import DiceParserCore
 from src.dice_parser_utils import DiceParserUtils
 from src.dice_parser_exceptions import DiceParserError, TokenizationError, ValidationError
+from src.validation import validate_dice_notation
+from src.cache_stats import CacheStats
+from src.error_handling import log_error
 from src.constants import (
     DEFAULT_DICE_CACHE_SIZE,
     PERCENTAGE_MULTIPLIER,
@@ -66,7 +71,10 @@ class DiceRollCache:
             'last_access_time': None
         }
 
-    def get(self, key):
+        # Create stats tracker
+        self._cache_stats = CacheStats()
+
+    def get(self, key: str) -> Optional[int]:
         """
         Retrieve an item from the cache.
 
@@ -82,6 +90,7 @@ class DiceRollCache:
         # Check if key exists
         if key not in self._cache:
             self._stats['misses'] += 1
+            self._cache_stats.record_miss()
             return None
 
         # Move the item to the end (most recently used)
@@ -91,10 +100,11 @@ class DiceRollCache:
         # Update hit stats and last access time
         self._stats['hits'] += 1
         self._stats['last_access_time'] = time.time()
+        self._cache_stats.record_hit()
 
         return value
 
-    def put(self, key, value):
+    def put(self, key: str, value: int) -> None:
         """
         Add an item to the cache, potentially evicting the least recently used item.
 
@@ -106,11 +116,12 @@ class DiceRollCache:
         if len(self._cache) >= self._max_size:
             self._cache.popitem(last=False)
             self._stats['evictions'] += 1
+            self._cache_stats.record_eviction()
 
         # Add the new item
         self._cache[key] = value
 
-    def clear(self):
+    def clear(self) -> None:
         """
         Clear the entire cache and reset statistics.
         """
@@ -125,8 +136,9 @@ class DiceRollCache:
             'creation_time': creation_time,
             'last_access_time': None
         }
+        self._cache_stats.reset()
 
-    def get_stats(self):
+    def get_stats(self) -> Dict[str, Any]:
         """
         Get comprehensive cache statistics.
 
@@ -152,11 +164,11 @@ class DiceRollCache:
 # Create a global dice roll cache
 _dice_roll_cache = DiceRollCache()
 
-# Create a singleton instance of the parser
+# Create singleton instances of the parser
 _parser_core = DiceParserCore()
 _parser_utils = DiceParserUtils()
 
-def roll_dice(dice_string, use_cache=True, deterministic=False, seed=None):
+def roll_dice(dice_string: str, use_cache: bool = True, deterministic: bool = False, seed: Optional[int] = None) -> int:
     """
     Parse and roll dice with advanced caching and configuration.
 
@@ -174,7 +186,7 @@ def roll_dice(dice_string, use_cache=True, deterministic=False, seed=None):
     """
     try:
         # Validate dice notation first
-        if not _parser_utils.validate_dice_notation(dice_string):
+        if not validate_dice_notation(dice_string):
             raise ValidationError(f"Invalid dice notation: {dice_string}")
 
         # If caching is disabled or deterministic mode is on, bypass cache
@@ -197,10 +209,13 @@ def roll_dice(dice_string, use_cache=True, deterministic=False, seed=None):
         return result
 
     except (TokenizationError, ValidationError) as e:
+        log_error("dice_roll_error", f"Error rolling dice: {str(e)}")
         raise DiceParserError(f"Error parsing dice: {e}")
+    except Exception as e:
+        log_error("unexpected_dice_error", f"Unexpected error in dice rolling: {str(e)}")
+        raise DiceParserError(f"Unexpected error rolling dice: {e}")
 
-# Define the _parse_and_roll_tokens function that was missing
-def _parse_and_roll_tokens(tokens, deterministic=False):
+def _parse_and_roll_tokens(tokens: List[Tuple[str, Any]], deterministic: bool = False) -> int:
     """
     Parse tokens and roll dice based on them.
 
@@ -212,3 +227,25 @@ def _parse_and_roll_tokens(tokens, deterministic=False):
         int: Result of dice roll
     """
     return _parser_core.parse(tokens, deterministic=deterministic)
+
+
+def clear_dice_cache() -> Dict[str, Any]:
+    """
+    Clear the dice roll cache and return statistics.
+
+    Returns:
+        dict: Cache statistics before clearing
+    """
+    stats = _dice_roll_cache.get_stats()
+    _dice_roll_cache.clear()
+    return stats
+
+
+def get_dice_cache_stats() -> Dict[str, Any]:
+    """
+    Get statistics about the dice roll cache.
+
+    Returns:
+        dict: Detailed cache statistics
+    """
+    return _dice_roll_cache.get_stats()

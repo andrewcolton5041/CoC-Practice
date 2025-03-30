@@ -6,38 +6,44 @@ caching and validation. It provides functions for loading individual characters
 and validating character data structure.
 
 Author: Unknown
-Version: 1.1
+Version: 1.2
 Last Updated: 2025-03-30
 """
 
 import os
-import json
+from typing import Dict, Any, Optional, Tuple, List
+
 from src.character_cache_core import CharacterCache
 from src.constants import (
-    REQUIRED_FIELDS,
     DEFAULT_DIRECTORY,
     JSON_EXTENSION,
-    DEFAULT_ENCODING,
-    JSON_INDENT,
     STATUS_CACHE_HIT,
     STATUS_LOADED_FROM_FILE,
     STATUS_VALIDATION_FAILED,
     STATUS_FILE_NOT_FOUND,
-    STATUS_INVALID_JSON,
+    STATUS_INVALID_JSON
 )
-
-def validate_character_data(character_data):
-    """
-    Validate that character data contains all required fields.
-    """
-    return all(field in character_data for field in REQUIRED_FIELDS)
+from src.validation import validate_character_data, validate_file_path
+from src.file_utils import read_json_file, write_json_file, list_json_files
+from src.error_handling import log_error, display_user_error
 
 
-def load_character_from_json(filename, cache):
+def load_character_from_json(filename: str, cache: CharacterCache) -> Optional[Dict[str, Any]]:
     """
     Load a premade character from a JSON file with intelligent caching.
+
+    Args:
+        filename (str): Path to the character JSON file
+        cache (CharacterCache): Cache instance to use for caching
+
+    Returns:
+        dict or None: Character data or None if loading failed
     """
     try:
+        if not validate_file_path(filename, must_exist=False):
+            log_error("invalid_path", f"Invalid file path: '{filename}'")
+            return None
+
         character_data, status = cache.load_character(filename, validate_character_data)
 
         if status == STATUS_CACHE_HIT:
@@ -45,96 +51,108 @@ def load_character_from_json(filename, cache):
         elif status == STATUS_LOADED_FROM_FILE:
             return character_data
         elif status == STATUS_VALIDATION_FAILED:
-            print(f"Error: Character data in '{filename}' is missing required fields.")
+            display_user_error("validation_error", f"Character data in '{filename}' is missing required fields.")
         elif status == STATUS_FILE_NOT_FOUND:
-            print(f"Error: File '{filename}' not found.")
+            display_user_error("file_not_found", f"File '{filename}' not found.")
         elif status == STATUS_INVALID_JSON:
-            print(f"Error: Invalid JSON format in '{filename}'.")
+            display_user_error("invalid_json", f"Invalid JSON format in '{filename}'.")
         else:
-            print(f"Error loading character from '{filename}': {status}")
+            display_user_error("unknown_error", f"Error loading character from '{filename}': {status}")
+
         return None
 
-    except PermissionError:
-        print(f"Error: No permission to access '{filename}'.")
-        return None
-    except OSError as e:
-        print(f"Error accessing '{filename}': {e}")
-        return None
     except Exception as e:
-        print(f"Unexpected error loading character from '{filename}': {e}")
+        log_error("unexpected_error", f"Unexpected error loading character from '{filename}'", 
+                 {"error": str(e)})
         return None
 
 
-def load_all_characters(directory=DEFAULT_DIRECTORY, cache=None):
+def load_all_characters(directory: str = DEFAULT_DIRECTORY, cache: Optional[CharacterCache] = None) -> Dict[str, Dict[str, Any]]:
     """
     Load all characters from a directory with caching support.
+
+    Args:
+        directory (str): Directory containing character files
+        cache (CharacterCache, optional): Cache instance to use for caching
+
+    Returns:
+        dict: Dictionary mapping filenames to character data
     """
     characters = {}
 
     try:
         if not os.path.exists(directory):
-            print(f"Error: Directory '{directory}' not found.")
+            display_user_error("directory_not_found", f"Directory '{directory}' not found.")
             return characters
 
         if cache is None:
             cache = CharacterCache()
 
-        for filename in os.listdir(directory):
-            if filename.endswith(JSON_EXTENSION):
-                full_path = os.path.join(directory, filename)
-                try:
-                    character_data = load_character_from_json(full_path, cache)
-                    if character_data:
-                        characters[full_path] = character_data
-                except Exception as e:
-                    print(f"Error loading character from '{full_path}': {e}")
-                    continue
+        json_files = list_json_files(directory)
+        for filename in json_files:
+            try:
+                character_data = load_character_from_json(filename, cache)
+                if character_data:
+                    characters[filename] = character_data
+            except Exception as e:
+                log_error("character_loading_error", f"Error loading character from '{filename}'", 
+                         {"error": str(e)})
+                continue
 
         return characters
 
-    except PermissionError:
-        print(f"Error: No permission to access directory '{directory}'.")
-        return characters
     except Exception as e:
-        print(f"Error loading characters from directory '{directory}': {e}")
+        log_error("directory_error", f"Error loading characters from directory '{directory}'", 
+                 {"error": str(e)})
         return characters
 
 
-def save_character_to_json(character_data, filename, cache=None):
+def save_character_to_json(character_data: Dict[str, Any], filename: str, 
+                          cache: Optional[CharacterCache] = None) -> bool:
     """
     Save character data to a JSON file and update the cache if provided.
+
+    Args:
+        character_data (dict): Character data to save
+        filename (str): Path to save the character file
+        cache (CharacterCache, optional): Cache instance to update
+
+    Returns:
+        bool: True if saving was successful, False otherwise
     """
     try:
         if not validate_character_data(character_data):
-            print(f"Error: Cannot save invalid character data to '{filename}'.")
+            display_user_error("invalid_character", f"Cannot save invalid character data to '{filename}'.")
             return False
 
-        directory = os.path.dirname(filename)
-        if directory and not os.path.exists(directory):
-            os.makedirs(directory)
-
-        with open(filename, 'w', encoding=DEFAULT_ENCODING) as f:
-            json.dump(character_data, f, indent=JSON_INDENT)
+        success, status = write_json_file(filename, character_data)
+        if not success:
+            display_user_error("file_write_error", f"Error writing to '{filename}': {status}")
+            return False
 
         if cache is not None:
             cache.put(filename, character_data)
 
         return True
 
-    except PermissionError:
-        print(f"Error: No permission to write to '{filename}'.")
-        return False
-    except OSError as e:
-        print(f"Error writing to '{filename}': {e}")
-        return False
     except Exception as e:
-        print(f"Unexpected error saving character to '{filename}': {e}")
+        log_error("save_error", f"Unexpected error saving character to '{filename}'", 
+                 {"error": str(e)})
         return False
 
 
-def get_character_field(character_data, field_path, default=None):
+def get_character_field(character_data: Optional[Dict[str, Any]], field_path: str, 
+                       default: Any = None) -> Any:
     """
     Safely get a field from character data using a dot-notation path.
+
+    Args:
+        character_data (dict): Character data
+        field_path (str): Path to the field using dot notation (e.g., "attributes.Strength")
+        default: Default value to return if field is not found
+
+    Returns:
+        The field value or default if not found
     """
     if not character_data:
         return default
