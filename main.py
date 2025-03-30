@@ -11,7 +11,7 @@ This application can be used by game masters and players to quickly access
 character information for the Call of Cthulhu roleplaying game.
 
 Author: Unknown
-Version: 1.1
+Version: 1.2
 Last Updated: 2025-03-30
 """
 
@@ -19,12 +19,24 @@ import os
 import json
 import os.path
 import sys
-
-# Global cache for storing loaded character data
-character_cache = {}
+from character_cache import CharacterCache
 
 
-def load_character_from_json(filename):
+def validate_character_data(character_data):
+    """
+    Validate that character data contains all required fields.
+
+    Args:
+        character_data (dict): Character data to validate
+
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    required_fields = ['name', 'attributes']
+    return all(field in character_data for field in required_fields)
+
+
+def load_character_from_json(filename, cache):
     """
     Load a premade character from a JSON file with intelligent caching.
 
@@ -32,6 +44,7 @@ def load_character_from_json(filename):
 
     Args:
         filename (str): Path to the JSON file containing character data
+        cache (CharacterCache): Cache instance for storing character data
 
     Returns:
         dict: Dictionary containing the character data or None if file cannot be loaded
@@ -41,46 +54,35 @@ def load_character_from_json(filename):
         PermissionError: If the file cannot be accessed due to permissions
         json.JSONDecodeError: If the file contains invalid JSON
     """
-    # Get the file's last modification time
     try:
-        mod_time = os.path.getmtime(filename)
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
-        return None
+        # Use the cache's load_character method to handle both cache retrieval and file loading
+        character_data, status = cache.load_character(filename, validate_character_data)
+
+        if status == "cache_hit":
+            return character_data
+        elif status == "loaded_from_file":
+            return character_data
+        elif status == "validation_failed":
+            print(f"Error: Character data in '{filename}' is missing required fields.")
+            return None
+        elif status == "file_not_found":
+            print(f"Error: File '{filename}' not found.")
+            return None
+        elif status == "invalid_json":
+            print(f"Error: Invalid JSON format in '{filename}'.")
+            return None
+        else:
+            print(f"Error loading character from '{filename}': {status}")
+            return None
+
     except PermissionError:
         print(f"Error: No permission to access '{filename}'.")
         return None
     except OSError as e:
         print(f"Error accessing '{filename}': {e}")
         return None
-
-    # Check if file is in cache and if cached version is still current
-    if filename in character_cache and character_cache[filename]["mod_time"] == mod_time:
-        return character_cache[filename]["data"]
-
-    # Load from file
-    try:
-        with open(filename, 'r', encoding='utf-8') as f:
-            character_data = json.load(f)
-
-        # Validate required character data fields
-        required_fields = ['name', 'attributes']
-        for field in required_fields:
-            if field not in character_data:
-                print(f"Error: Missing required field '{field}' in '{filename}'.")
-                return None
-
-        # Store both the data and the modification time
-        character_cache[filename] = {
-            "data": character_data,
-            "mod_time": mod_time
-        }
-        return character_data
-    except json.JSONDecodeError:
-        print(f"Error: Invalid JSON format in '{filename}'.")
-        return None
     except Exception as e:
-        print(f"Error loading character from '{filename}': {e}")
+        print(f"Unexpected error loading character from '{filename}': {e}")
         return None
 
 
@@ -138,48 +140,6 @@ def display_character(character_data):
 
     # Print closing divider
     print("=" * 50 + "\n")
-
-
-def invalidate_cache(filename=None):
-    """
-    Invalidate the character cache.
-
-    Args:
-        filename (str, optional): Specific file to remove from cache.
-            If None, clears the entire cache.
-
-    Returns:
-        None
-    """
-    global character_cache
-
-    if filename is None:
-        # Clear the entire cache
-        character_cache = {}
-        print("Cache cleared successfully.")
-    elif filename in character_cache:
-        # Remove specific file from cache
-        del character_cache[filename]
-        print(f"'{filename}' removed from cache successfully.")
-    else:
-        print(f"'{filename}' not found in cache.")
-
-
-def get_cache_status():
-    """
-    Get information about the current state of the character cache.
-
-    Returns:
-        dict: Dictionary with cache statistics including:
-            - size: Number of characters in cache
-            - characters: List of character filenames in cache
-            - memory_usage: Approximate memory usage of cached data
-    """
-    return {
-        "size": len(character_cache),
-        "characters": list(character_cache.keys()),
-        "memory_usage": sum(len(str(data)) for data in character_cache.values())
-    }
 
 
 def list_character_files():
@@ -241,6 +201,33 @@ def get_user_selection(prompt, min_value, max_value):
             return None
 
 
+def display_cache_stats(cache):
+    """
+    Display statistics about the character cache.
+
+    Args:
+        cache (CharacterCache): The character cache instance
+
+    Returns:
+        None
+    """
+    stats = cache.get_stats()
+    print("\n--- Cache Status ---")
+    print(f"Characters in cache: {stats['size']}")
+    print(f"Approximate memory usage: {stats['memory_usage']} bytes")
+
+    if stats['size'] > 0:
+        print("\nCached characters:")
+        for i, char_file in enumerate(stats['files'], 1):
+            print(f"{i}. {char_file}")
+
+        if 'oldest_entry_age' in stats:
+            print(f"\nOldest entry age: {stats['oldest_entry_age']:.1f} seconds")
+            print(f"Newest entry age: {stats['newest_entry_age']:.1f} seconds")
+    else:
+        print("\nNo characters in cache.")
+
+
 def main():
     """
     Main menu function that handles user interaction with the application.
@@ -250,15 +237,18 @@ def main():
     Implements character caching for improved performance.
 
     Returns:
-        None
+        int: Exit code (0 for success, non-zero for errors)
     """
+    # Initialize the character cache
+    cache = CharacterCache()
+
     try:
         while True:
             # Display main menu
             print("\n=== Call of Cthulhu Character Viewer ===")
             print("1. View Premade Characters")
             print("2. Clear Character Cache")
-            print("3. View Cache Status")  # New option
+            print("3. View Cache Status")
             print("4. Exit")
 
             # Get user choice
@@ -300,7 +290,7 @@ def main():
                     # Load and display the selected character (now with caching)
                     filename = os.path.join('characters', character_files[selection - 1])
                     try:
-                        character_data = load_character_from_json(filename)
+                        character_data = load_character_from_json(filename, cache)
                         if character_data:  # Check if load was successful
                             display_character(character_data)
                     except Exception as e:
@@ -314,20 +304,12 @@ def main():
 
             elif choice == 2:
                 # Clear the character cache
-                invalidate_cache()
+                cache.invalidate()
+                print("Character cache cleared successfully.")
 
             elif choice == 3:
                 # Display cache status
-                status = get_cache_status()
-                print("\n--- Cache Status ---")
-                print(f"Characters in cache: {status['size']}")
-                print(f"Approximate memory usage: {status['memory_usage']} bytes")
-                if status['characters']:
-                    print("\nCached characters:")
-                    for i, char_file in enumerate(status['characters'], 1):
-                        print(f"{i}. {char_file}")
-                else:
-                    print("\nNo characters in cache.")
+                display_cache_stats(cache)
 
                 # Wait for user to press Enter before returning to menu
                 try:
