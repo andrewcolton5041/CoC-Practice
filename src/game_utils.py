@@ -16,8 +16,33 @@ Version: 1.2
 Last Updated: 2025-03-30
 """
 
-from src.dice_roll import roll_dice as dr
-from src.coc_rules import rules
+from src.dice_roll import roll_dice
+from src.dice_parser_core import DiceParserCore
+from src.dice_parser_utils import DiceParserUtils
+from src.dice_parser_exceptions import DiceParserError
+
+
+def get_skill_value(character_data, skill_name):
+    """
+    Get the value of a skill or attribute from character data.
+
+    Args:
+        character_data (dict): Character data dictionary
+        skill_name (str): Name of the skill or attribute to retrieve
+
+    Returns:
+        int: The skill or attribute value
+
+    Raises:
+        ValueError: If the skill or attribute doesn't exist
+    """
+    if 'skills' in character_data and skill_name in character_data['skills']:
+        return character_data['skills'][skill_name]
+    elif 'attributes' in character_data and skill_name in character_data['attributes']:
+        return character_data['attributes'][skill_name]
+    else:
+        raise ValueError(f"Skill or attribute '{skill_name}' not found for character")
+
 
 def skill_check(character_data, skill_name):
     """
@@ -37,19 +62,10 @@ def skill_check(character_data, skill_name):
         ValueError: If the specified skill or attribute doesn't exist for the character
     """
     # First, try to locate the skill value in the character data
-    skill_value = None
-    if 'skills' in character_data and skill_name in character_data['skills']:
-        # Look in skills first
-        skill_value = character_data['skills'][skill_name]
-    elif skill_name in character_data['attributes']:
-        # If not found in skills, check attributes
-        skill_value = character_data['attributes'][skill_name]
-    else:
-        # If not found in either location, raise an error
-        raise ValueError(f"Skill or attribute '{skill_name}' not found for this character")
+    skill_value = get_skill_value(character_data, skill_name)
 
     # Roll a d100 for the check
-    roll = dr.roll_dice("1D100")
+    roll = roll_dice("1D100")
 
     # Determine the success level based on the roll and skill value
     if roll <= skill_value / 5:
@@ -64,6 +80,7 @@ def skill_check(character_data, skill_name):
         success_level = "Failure"
 
     return (roll, success_level)
+
 
 def opposed_check(char1_data, char1_skill, char2_data, char2_skill):
     """
@@ -116,26 +133,6 @@ def opposed_check(char1_data, char1_skill, char2_data, char2_skill):
         else:
             return "The opposed check results in a tie"
 
-def get_skill_value(character_data, skill_name):
-    """
-    Helper function to get a skill or attribute value from character data.
-
-    Args:
-        character_data (dict): The character dictionary data
-        skill_name (str): The name of the skill or attribute to retrieve
-
-    Returns:
-        int: The value of the skill or attribute
-
-    Raises:
-        ValueError: If the skill or attribute doesn't exist for the character
-    """
-    if 'skills' in character_data and skill_name in character_data['skills']:
-        return character_data['skills'][skill_name]
-    elif skill_name in character_data['attributes']:
-        return character_data['attributes'][skill_name]
-    else:
-        raise ValueError(f"Skill or attribute '{skill_name}' not found for this character")
 
 def roll_damage(weapon_data):
     """
@@ -150,7 +147,7 @@ def roll_damage(weapon_data):
         int or str: The calculated damage result or the damage formula if it can't be calculated
     """
     try:
-        # Try to roll the damage directly using the new parser
+        # Try to roll the damage directly using the new dice roller
         damage_formula = weapon_data['damage']
 
         # Handle common damage bonus pattern
@@ -160,13 +157,33 @@ def roll_damage(weapon_data):
             base_formula = parts[0]
 
             # Roll the base damage and bonus separately
-            base_damage = dr.roll_dice(base_formula)
-            bonus_damage = dr.roll_dice('1D4')
+            base_damage = roll_dice(base_formula)
+            bonus_damage = roll_dice('1D4')
 
             return base_damage + bonus_damage
         else:
-            # Use the new parser for standard formulas
-            return dr.roll_dice(damage_formula)
-    except ValueError:
+            # Use the standard dice roller for regular formulas
+            return roll_dice(damage_formula)
+    except DiceParserError:
         # If parsing fails, return the original formula
         return weapon_data['damage']
+
+
+def calculate_skill_check_details(skill_value):
+    """
+    Calculate detailed skill check thresholds based on skill value.
+
+    In Call of Cthulhu, success levels are determined by comparing the roll 
+    to different thresholds of the skill value.
+
+    Args:
+        skill_value (int): The character's skill value
+
+    Returns:
+        dict: A dictionary containing skill check thresholds
+    """
+    return {
+        'regular_success': skill_value,
+        'hard_success': skill_value // 2,
+        'extreme_success': skill_value // 5
+    }

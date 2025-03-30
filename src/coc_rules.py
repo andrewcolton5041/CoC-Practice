@@ -15,7 +15,10 @@ Version: 2.0
 Last Updated: 2025-03-30
 """
 
-from src.dice_roll import roll_dice, get_cache_stats, clear_dice_cache
+from src.dice_parser_core import DiceParserCore
+from src.dice_parser_utils import DiceParserUtils
+from src.dice_parser_exceptions import DiceParserError, TokenizationError, ValidationError
+from src.dice_roll import roll_dice, roll_dice_with_details
 
 
 def improvement_check(stat, use_cache=True):
@@ -54,27 +57,33 @@ def success_check(stat, use_cache=True):
     Returns:
         str: One of: "Extreme Success", "Hard Success", "Regular Success", "Failure", or "Fumble"
     """
-    # Roll a d100
-    roll = roll_dice("1D100", use_cache=use_cache)
+    try:
+        # Roll a d100
+        roll = roll_dice("1D100", use_cache=use_cache)
 
-    # Calculate success thresholds
-    extreme_threshold = stat // 5
-    hard_threshold = stat // 2
+        # Calculate success thresholds
+        extreme_threshold = stat // 5
+        hard_threshold = stat // 2
 
-    # Check for Extreme Success (Critical) - 1/5 of skill value
-    if roll <= extreme_threshold:
-        return "Extreme Success"
-    # Check for Hard Success - 1/2 of skill value
-    elif roll <= hard_threshold:
-        return "Hard Success"
-    # Check for Regular Success - equal to or under skill value
-    elif roll <= stat:
-        return "Regular Success"
-    # Check for Fumble - 96-100 for skills 50 or less, only 100 for skills over 50
-    elif (stat <= 50 and 96 <= roll <= 100) or (stat > 50 and roll == 100):
-        return "Fumble"
-    # Everything else is a normal failure
-    else:
+        # Check for Extreme Success (Critical) - 1/5 of skill value
+        if roll <= extreme_threshold:
+            return "Extreme Success"
+        # Check for Hard Success - 1/2 of skill value
+        elif roll <= hard_threshold:
+            return "Hard Success"
+        # Check for Regular Success - equal to or under skill value
+        elif roll <= stat:
+            return "Regular Success"
+        # Check for Fumble - 96-100 for skills 50 or less, only 100 for skills over 50
+        elif (stat <= 50 and 96 <= roll <= 100) or (stat > 50 and roll == 100):
+            return "Fumble"
+        # Everything else is a normal failure
+        else:
+            return "Failure"
+
+    except DiceParserError as e:
+        # Log or handle dice rolling errors
+        print(f"Error in success check: {e}")
         return "Failure"
 
 
@@ -106,8 +115,8 @@ def opposed_check(char1_data, char1_skill, char2_data, char2_skill, use_cache=Tr
     char2_roll = roll_dice("1D100", use_cache=use_cache)
 
     # Determine success levels
-    char1_success = get_success_level(char1_value, char1_roll)
-    char2_success = get_success_level(char2_value, char2_roll)
+    char1_success = _get_success_level(char1_value, char1_roll)
+    char2_success = _get_success_level(char2_value, char2_roll)
 
     # Map success levels to numerical values for easy comparison
     success_levels = {
@@ -164,7 +173,7 @@ def get_skill_value(character_data, skill_name):
         raise ValueError(f"Skill or attribute '{skill_name}' not found for character")
 
 
-def get_success_level(skill_value, roll):
+def _get_success_level(skill_value, roll):
     """
     Determine the success level based on skill value and roll.
 
@@ -192,23 +201,3 @@ def get_success_level(skill_value, roll):
         return "Fumble"
     else:
         return "Failure"
-
-
-def get_rules_cache_stats():
-    """
-    Get statistics about the dice cache used by the rules module.
-
-    Returns:
-        dict: Cache statistics from the dice_roll module
-    """
-    return get_cache_stats()
-
-
-def clear_rules_cache():
-    """
-    Clear the dice cache used by the rules module.
-
-    Returns:
-        dict: Statistics about the cleared cache
-    """
-    return clear_dice_cache()

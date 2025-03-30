@@ -11,6 +11,8 @@ Last Updated: 2025-03-30
 """
 
 import random
+import re
+from typing import Dict, Union, Optional
 
 
 class DiceParserUtils:
@@ -42,6 +44,51 @@ class DiceParserUtils:
         self._deterministic_mode = enabled
         self._deterministic_values = values or {}
         self._next_deterministic_value = 0
+
+    def validate_dice_notation(self, dice_string):
+        """
+        Validate a dice notation string.
+
+        Args:
+            dice_string (str): Dice notation to validate 
+                (e.g., "3D6", "1D20+5", "(2D6+6)*5")
+
+        Returns:
+            bool: True if valid, False otherwise
+        """
+        try:
+            # Remove all whitespace and handle preprocessing for complex cases
+            dice_string = dice_string.replace(' ', '')
+
+            # Reject entirely empty strings
+            if not dice_string:
+                return False
+
+            # Quick reject for some obviously invalid cases
+            if dice_string in ['()', '()+', '()*', '()/']:
+                return False
+
+            # Reject strings with invalid parentheses structures
+            if re.search(r'\(\)|\([+\-*/]*\)', dice_string):
+                return False
+
+            # Reject strings that combine dice/numbers with empty parentheses
+            if re.search(r'(D\d+|[0-9])\(\)', dice_string):
+                return False
+
+            # Reject strings that start or end with an operator
+            if re.match(r'^[+\-*/]|[+\-*/]$', dice_string):
+                return False
+
+            # Use the existing parser's tokenization and validation
+            from src.dice_parser_core import DiceParserCore
+            parser_core = DiceParserCore()
+
+            tokens = parser_core.tokenize(dice_string)
+            parser_core.validate_tokens(tokens)
+            return True
+        except Exception:
+            return False
 
     def get_deterministic_roll(self, sides, count=1):
         """
@@ -92,26 +139,6 @@ class DiceParserUtils:
         finally:
             # Restore the previous random state
             random.setstate(state)
-
-    def validate_dice_notation(self, dice_string):
-        """
-        Validate a dice notation string.
-
-        Args:
-            dice_string (str): Dice notation to validate 
-                (e.g., "3D6", "1D20+5", "(2D6+6)*5")
-
-        Returns:
-            bool: True if valid, False otherwise
-        """
-        try:
-            from src.dice_parser_core import DiceParserCore
-            parser_core = DiceParserCore()
-            tokens = parser_core.tokenize(dice_string)
-            parser_core.validate_tokens(tokens)
-            return True
-        except ValueError:
-            return False
 
     def parse_dice_notation(self, dice_string):
         """

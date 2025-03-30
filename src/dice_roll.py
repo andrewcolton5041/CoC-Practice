@@ -20,7 +20,10 @@ import inspect
 import sys
 import time
 from collections import OrderedDict
-from src.dice_parser import DiceParser
+from src.dice_parser_core import DiceParserCore
+from src.dice_parser_utils import DiceParserUtils
+from src.dice_parser_exceptions import DiceParserError, TokenizationError, ValidationError
+
 
 class DiceRollCache:
     """
@@ -141,8 +144,9 @@ class DiceRollCache:
 # Create a global dice roll cache
 _dice_roll_cache = DiceRollCache()
 
-# Create a singleton instance of the DiceParser
-_parser = DiceParser()
+# Create a singleton instance of the parser
+_parser_core = DiceParserCore()
+_parser_utils = DiceParserUtils()
 
 def roll_dice(dice_string, use_cache=True, deterministic=False, seed=None):
     """
@@ -156,21 +160,42 @@ def roll_dice(dice_string, use_cache=True, deterministic=False, seed=None):
 
     Returns:
         int: Result of the dice roll
+
+    Raises:
+        DiceParserError: For any dice parsing or rolling issues
     """
-    # If caching is disabled or deterministic mode is on, bypass cache
-    if not use_cache or deterministic:
-        return _parser.roll_dice(dice_string, deterministic, seed)
+    try:
+        # Validate dice notation first
+        if not _parser_utils.validate_dice_notation(dice_string):
+            raise ValidationError(f"Invalid dice notation: {dice_string}")
 
-    # Check if result is already in cache
-    cache_result = _dice_roll_cache.get(dice_string)
-    if cache_result is not None:
-        return cache_result
+        # If caching is disabled or deterministic mode is on, bypass cache
+        if not use_cache or deterministic:
+            if deterministic:
+                # Use deterministic values when specified
+                tokens = _parser_core.tokenize(dice_string)
+                return _parse_and_roll_tokens(tokens, deterministic=True)
 
-    # Roll dice and cache the result
-    result = _parser.roll_dice(dice_string)
-    _dice_roll_cache.put(dice_string, result)
+            # Standard non-cached roll
+            tokens = _parser_core.tokenize(dice_string)
+            return _parse_and_roll_tokens(tokens)
 
-    return result
+        # Check if result is already in cache
+        cache_result = _dice_roll_cache.get(dice_string)
+        if cache_result is not None:
+            return cache_result
+
+        # Tokenize and parse
+        tokens = _parser_core.tokenize(dice_string)
+
+        # Roll dice and cache the result
+        result = _parse_and_roll_tokens(tokens)
+        _dice_roll_cache.put(dice_string, result)
+
+        return result
+
+    except (TokenizationError, ValidationError) as e:
+        raise DiceParserError(f"Error parsing dice: {e}")
 
 def roll_dice_with_details(dice_string, deterministic=False, seed=None):
     """
@@ -183,8 +208,55 @@ def roll_dice_with_details(dice_string, deterministic=False, seed=None):
 
     Returns:
         tuple: (total, individual_rolls)
+
+    Raises:
+        DiceParserError: For any dice parsing or rolling issues
     """
-    return _parser.roll_dice_with_details(dice_string, deterministic, seed)
+    try:
+        # Parse and validate dice notation
+        tokens = _parser_core.tokenize(dice_string)
+
+        # Ensure it's a simple dice notation
+        if len(tokens) != 1 or tokens[0][0] != 'DICE':
+            raise ValidationError("For detailed rolls, use simple dice notation (e.g., '3D6')")
+
+        # Extract dice parameters
+        count, sides = tokens[0][1]
+
+        # Use deterministic utility for generating rolls
+        if deterministic:
+            rolls = _parser_utils.get_deterministic_roll(sides, count)
+        else:
+            rolls = _parser_utils.roll_random_dice(sides, count, seed)
+
+        total = sum(rolls)
+        return (total, rolls)
+
+    except (TokenizationError, ValidationError) as e:
+        raise DiceParserError(f"Error parsing dice: {e}")
+
+def _parse_and_roll_tokens(tokens, deterministic=False):
+    """
+    Helper function to parse and roll dice tokens.
+
+    Args:
+        tokens (list): Tokenized dice expression
+        deterministic (bool): Use deterministic mode if True
+
+    Returns:
+        int: The result of rolling the dice expression
+    """
+    try:
+        # Use parser core to evaluate the tokens
+        if deterministic:
+            _parser_utils.set_deterministic_mode(True)
+
+        # Parse and evaluate tokens
+        return _parser_core.parse(tokens)
+
+    finally:
+        # Always reset deterministic mode
+        _parser_utils.set_deterministic_mode(False)
 
 def clear_dice_cache():
     """
