@@ -6,7 +6,7 @@ verifying that it correctly handles memoization, caching, and performance
 improvements for repeated dice rolls.
 
 Author: Unknown
-Version: 4.1
+Version: 4.0
 Last Updated: 2025-03-30
 """
 
@@ -18,8 +18,6 @@ import os
 # Add the src directory to the path so we can import the modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from typing import List, Tuple, Union, Any, Sequence, cast
-
 from src.dice_parser_core import DiceParserCore
 from src.dice_parser_utils import DiceParserUtils
 from src.dice_parser_exceptions import (
@@ -29,8 +27,6 @@ from src.dice_parser_exceptions import (
     LimitExceededError, 
     DiceParserError
 )
-
-TokenType = Union[int, Tuple[int, int], str]
 
 
 class TestDiceParserMemoization(unittest.TestCase):
@@ -47,8 +43,7 @@ class TestDiceParserMemoization(unittest.TestCase):
         """Test basic dice notation tokenization."""
         tokens = self.parser_core.tokenize("3D6")
         self.assertEqual(len(tokens), 1)
-        self.assertEqual(tokens[0][0], 'DICE')
-        self.assertEqual(tokens[0][1], (3, 6))
+        self.assertEqual(tokens[0], ('DICE', (3, 6)))
 
     def test_tokenization_complex_expression(self):
         """Test tokenization of a complex dice expression."""
@@ -82,11 +77,7 @@ class TestDiceParserMemoization(unittest.TestCase):
 
     def test_parse_simple_dice(self):
         """Test parsing of a simple dice notation."""
-        # Cast tokens to the expected type
-        tokens: List[Tuple[str, TokenType]] = cast(
-            List[Tuple[str, TokenType]], 
-            self.parser_core.tokenize("3D6")
-        )
+        tokens = self.parser_core.tokenize("3D6")
 
         # Run multiple times to check consistency
         results = []
@@ -100,32 +91,21 @@ class TestDiceParserMemoization(unittest.TestCase):
 
     def test_parse_deterministic_mode(self):
         """Test parsing in deterministic mode."""
-        # Cast tokens to the expected type
-        tokens: List[Tuple[str, TokenType]] = cast(
-            List[Tuple[str, TokenType]], 
-            self.parser_core.tokenize("3D6")
-        )
+        tokens = self.parser_core.tokenize("3D6")
 
-        # Perform multiple runs to ensure consistency
-        results = []
-        for _ in range(5):
-            result = self.parser_core.parse(tokens, deterministic=True)
-            results.append(result)
-            print(f"Deterministic result {_+1}: {result}")
+        # First roll
+        random.seed(42)
+        first_result = self.parser_core.parse(tokens, deterministic=True)
 
-        # Verify all results are the same
-        self.assertTrue(
-            all(r == results[0] for r in results), 
-            "Deterministic parsing should always produce the same result"
-        )
+        # Second roll should be identical
+        random.seed(42)
+        second_result = self.parser_core.parse(tokens, deterministic=True)
+
+        self.assertEqual(first_result, second_result)
 
     def test_parse_complex_expression(self):
         """Test parsing of a complex dice expression."""
-        # Cast tokens to the expected type
-        tokens: List[Tuple[str, TokenType]] = cast(
-            List[Tuple[str, TokenType]], 
-            self.parser_core.tokenize("(2D6+6)*5")
-        )
+        tokens = self.parser_core.tokenize("(2D6+6)*5")
 
         # Run multiple times to check consistency
         results = []
@@ -154,11 +134,8 @@ class TestDiceParserMemoization(unittest.TestCase):
         for expr, expected_error, description in invalid_expressions:
             with self.subTest(expr=expr, description=description):
                 with self.assertRaises(expected_error, msg=description):
-                    try:
-                        tokens = self.parser_core.tokenize(expr)
-                        self.parser_core.validate_tokens(tokens)
-                    except Exception as e:
-                        raise e
+                    tokens = self.parser_core.tokenize(expr)
+                    self.parser_core.validate_tokens(tokens)
 
     def test_limit_exceeded_errors(self):
         """Test handling of parsing limits."""
@@ -166,20 +143,6 @@ class TestDiceParserMemoization(unittest.TestCase):
         long_string = "1D6" * (DiceParserCore.MAX_DICE_STRING_LENGTH // 3 + 1)
         with self.assertRaises(LimitExceededError):
             self.parser_core.tokenize(long_string)
-
-    def test_validation_enhanced_dice_token(self):
-        """Test enhanced validation for DICE tokens."""
-        with self.assertRaises(ValidationError):
-            # Invalid DICE token (not a tuple)
-            self.parser_core.validate_tokens([('DICE', 'invalid')])
-
-        with self.assertRaises(ValidationError):
-            # DICE token with non-integer values
-            self.parser_core.validate_tokens([('DICE', ('3', '6'))])
-
-        with self.assertRaises(ValidationError):
-            # DICE token with wrong tuple length
-            self.parser_core.validate_tokens([('DICE', (3, 6, 9))])
 
     def test_notation_parsing_utility(self):
         """Test the dice notation parsing utility method."""

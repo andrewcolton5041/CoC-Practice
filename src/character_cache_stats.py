@@ -1,4 +1,5 @@
-"""Character Cache Statistics Module for Call of Cthulhu Character Viewer
+"""
+Character Cache Statistics Module for Call of Cthulhu Character Viewer
 
 This module provides statistics tracking and reporting for the character cache,
 offering insights into cache performance and memory usage.
@@ -10,8 +11,6 @@ Last Updated: 2025-03-30
 
 import time
 
-# Constants
-PERCENTAGE_MULTIPLIER = 100
 
 def get_cache_stats(cache):
     """
@@ -30,8 +29,6 @@ def get_cache_stats(cache):
             - hit_rate: Percentage of successful cache retrievals
             - hits: Number of cache hits
             - misses: Number of cache misses
-            - oldest_entry_age: Age in seconds of the oldest entry
-            - newest_entry_age: Age in seconds of the newest entry
     """
     stats = {
         "size": len(cache._cache),
@@ -41,17 +38,16 @@ def get_cache_stats(cache):
         "max_size": cache._max_size
     }
 
+    # Calculate cache entry ages if cache is not empty
     if cache._cache:
         current_time = time.time()
         cache_times = [entry["cached_time"] for entry in cache._cache.values()]
         stats["oldest_entry_age"] = current_time - min(cache_times)
         stats["newest_entry_age"] = current_time - max(cache_times)
 
+    # Calculate hit rate
     total_accesses = cache._hits + cache._misses
-    stats["hit_rate"] = (
-        (cache._hits / total_accesses) * PERCENTAGE_MULTIPLIER
-        if total_accesses > 0 else 0
-    )
+    stats["hit_rate"] = (cache._hits / total_accesses * 100) if total_accesses > 0 else 0
     stats["hits"] = cache._hits
     stats["misses"] = cache._misses
 
@@ -68,6 +64,10 @@ def clear_cache(cache):
     Returns:
         dict: Statistics about the cache before clearing
     """
+    # Capture current stats before clearing
     current_stats = get_cache_stats(cache)
+
+    # Clear the cache
     cache.invalidate()
+
     return current_stats

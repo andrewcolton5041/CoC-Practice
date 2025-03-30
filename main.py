@@ -27,11 +27,6 @@ from src.test_runner import (
     run_metadata_loading_tests
 )
 
-# Constants
-EXIT_SUCCESS = 0
-EXIT_FAILURE = 1
-USER_TERMINATION_MSG = "\nProgram terminated by user."
-UNEXPECTED_ERROR_MSG_TEMPLATE = "\nAn unexpected error occurred in the main program: {}"
 
 def main():
     """
@@ -44,6 +39,7 @@ def main():
         int: Exit code (0 for success, non-zero for errors)
     """
     try:
+        # Start the main menu, passing in required functions from other modules
         exit_code = main_menu(
             load_character_from_json,
             run_dice_parser_tests,
@@ -53,11 +49,12 @@ def main():
         )
         return exit_code
     except KeyboardInterrupt:
-        print(USER_TERMINATION_MSG)
-        return EXIT_SUCCESS
+        print("\nProgram terminated by user.")
+        return 0
     except Exception as e:
-        print(UNEXPECTED_ERROR_MSG_TEMPLATE.format(e))
-        return EXIT_FAILURE
+        print(f"\nAn unexpected error occurred in the main program: {e}")
+        return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

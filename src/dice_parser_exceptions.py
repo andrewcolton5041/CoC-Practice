@@ -1,52 +1,66 @@
-# We'll format the updated content and write it to a downloadable file
-
-updated_exceptions_content = """
-\"\"\"
+"""
 Custom Exceptions for Dice Parsing in Call of Cthulhu RPG
 
 This module defines specialized exceptions to provide more detailed
 error handling for dice notation parsing and evaluation.
 
-Author: Unknown
-Version: 4.1
-Last Updated: 2025-03-30
-\"\"\"
+Exceptions are designed to give precise information about parsing errors,
+helping developers and users understand exactly what went wrong.
 
-from typing import Optional, List, Union, Any, Dict, Tuple
+Author: Unknown
+Version: 4.0
+Last Updated: 2025-03-30
+"""
+
+from typing import Optional, List, Union
 
 
 class DiceParserError(Exception):
-    \"\"\"Base exception for all dice parser-related errors.\"\"\"
+    """
+    Base exception for all dice parser-related errors.
 
-    def __init__(self, message: str, dice_string: Optional[str] = None,
-                 context: Optional[Dict[str, Any]] = None):
-        \"\"\"
+    Serves as a common base for more specific dice parsing exceptions
+    with enhanced error reporting capabilities.
+    """
+    def __init__(self, 
+                 message: str, 
+                 dice_string: Optional[str] = None,
+                 context: Optional[dict] = None):
+        """
         Initialize the base dice parser error.
 
         Args:
-            message (str): Detailed error message.
-            dice_string (Optional[str]): The original dice string that caused the error.
-            context (Optional[Dict[str, Any]]): Additional context.
-        \"\"\"
+            message (str): Detailed error message
+            dice_string (str, optional): The original dice notation that caused the error
+            context (dict, optional): Additional context about the error
+        """
         super().__init__(message)
         self.dice_string = dice_string
         self.context = context or {}
 
 
 class TokenizationError(DiceParserError):
-    \"\"\"Raised when tokenizing a dice expression fails.\"\"\"
+    """
+    Raised when there are issues with tokenizing a dice expression.
 
-    def __init__(self, message: str, dice_string: Optional[str] = None,
-                 position: Optional[int] = None, problematic_token: Optional[str] = None):
-        \"\"\"
+    This exception occurs during the initial breakdown of a dice notation
+    into individual tokens, such as encountering invalid characters
+    or malformed expressions.
+    """
+    def __init__(self, 
+                 message: str, 
+                 dice_string: Optional[str] = None, 
+                 position: Optional[int] = None,
+                 problematic_token: Optional[str] = None):
+        """
         Initialize the tokenization error.
 
         Args:
-            message (str): Error message.
-            dice_string (Optional[str]): Dice string being parsed.
-            position (Optional[int]): Position of error.
-            problematic_token (Optional[str]): Token causing the error.
-        \"\"\"
+            message (str): Detailed error message
+            dice_string (str, optional): The original dice string that caused the error
+            position (int, optional): The position in the string where the error occurred
+            problematic_token (str, optional): The specific token causing the error
+        """
         context = {
             'position': position,
             'problematic_token': problematic_token
@@ -57,32 +71,39 @@ class TokenizationError(DiceParserError):
 
 
 class ValidationError(DiceParserError):
-    \"\"\"Raised when a dice expression fails semantic validation.\"\"\"
+    """
+    Raised when a dice expression fails validation.
 
+    This exception is raised when the token sequence is semantically 
+    incorrect, such as having mismatched parentheses or invalid 
+    token sequences.
+    """
     ERROR_TYPES = [
         'unbalanced_parentheses',
         'invalid_token_sequence',
         'missing_operand',
         'invalid_operator_placement',
-        'empty_parentheses',
-        'invalid_dice_token',
-        'invalid_dice_values',
-        'missing_tokens'
+        'empty_parentheses'
     ]
 
-    def __init__(self, message: str, dice_string: Optional[str] = None,
-                 tokens: Optional[List[Tuple[str, Any]]] = None, error_type: Optional[str] = None):
-        \"\"\"
+    def __init__(self, 
+                 message: str, 
+                 dice_string: Optional[str] = None,
+                 tokens: Optional[List[tuple]] = None,
+                 error_type: Optional[str] = None):
+        """
         Initialize the validation error.
 
         Args:
-            message (str): Error message.
-            dice_string (Optional[str]): Dice string being validated.
-            tokens (Optional[List[Tuple[str, Any]]]): Tokens causing error.
-            error_type (Optional[str]): Type of validation error.
-        \"\"\"
+            message (str): Detailed error message
+            dice_string (str, optional): The original dice string
+            tokens (list, optional): The tokens that failed validation
+            error_type (str, optional): Specific type of validation error
+        """
+        # Validate error type
         if error_type and error_type not in self.ERROR_TYPES:
             raise ValueError(f"Invalid error type. Must be one of {self.ERROR_TYPES}")
+
         context = {
             'tokens': tokens,
             'error_type': error_type
@@ -93,21 +114,28 @@ class ValidationError(DiceParserError):
 
 
 class RollError(DiceParserError):
-    \"\"\"Raised during errors with rolling dice.\"\"\"
+    """
+    Raised when there are issues with rolling dice.
 
-    def __init__(self, message: str, dice_notation: Optional[str] = None,
-                 sides: Optional[int] = None, count: Optional[int] = None,
+    This exception covers problems during the actual dice rolling process,
+    such as invalid dice parameters or roll generation failures.
+    """
+    def __init__(self, 
+                 message: str, 
+                 dice_notation: Optional[str] = None, 
+                 sides: Optional[int] = None, 
+                 count: Optional[int] = None,
                  error_type: Optional[str] = None):
-        \"\"\"
+        """
         Initialize the roll error.
 
         Args:
-            message (str): Error message.
-            dice_notation (Optional[str]): Dice notation being evaluated.
-            sides (Optional[int]): Number of dice sides.
-            count (Optional[int]): Number of dice rolled.
-            error_type (Optional[str]): Specific roll error type.
-        \"\"\"
+            message (str): Detailed error message
+            dice_notation (str, optional): The dice notation that caused the error
+            sides (int, optional): Number of sides on the die
+            count (int, optional): Number of dice to roll
+            error_type (str, optional): Specific type of roll error
+        """
         context = {
             'sides': sides,
             'count': count,
@@ -121,21 +149,28 @@ class RollError(DiceParserError):
 
 
 class LimitExceededError(DiceParserError):
-    \"\"\"Raised when parsing limits are exceeded.\"\"\"
+    """
+    Raised when parsing limits are exceeded.
 
-    def __init__(self, message: str, dice_string: Optional[str] = None,
-                 max_length: Optional[int] = None, max_dice: Optional[int] = None,
+    This exception occurs when dice parameters or expression complexity
+    goes beyond predefined limits to prevent computational or memory issues.
+    """
+    def __init__(self, 
+                 message: str, 
+                 dice_string: Optional[str] = None,
+                 max_length: Optional[int] = None,
+                 max_dice: Optional[int] = None, 
                  max_sides: Optional[int] = None):
-        \"\"\"
+        """
         Initialize the limit exceeded error.
 
         Args:
-            message (str): Error message.
-            dice_string (Optional[str]): Original dice string.
-            max_length (Optional[int]): Max allowed dice string length.
-            max_dice (Optional[int]): Max dice allowed.
-            max_sides (Optional[int]): Max sides per die.
-        \"\"\"
+            message (str): Detailed error message
+            dice_string (str, optional): The original dice string
+            max_length (int, optional): Maximum allowed length of dice string
+            max_dice (int, optional): Maximum number of dice allowed
+            max_sides (int, optional): Maximum number of sides allowed per die
+        """
         context = {
             'max_length': max_length,
             'max_dice': max_dice,
@@ -148,19 +183,24 @@ class LimitExceededError(DiceParserError):
 
 
 class DeterministicModeError(DiceParserError):
-    \"\"\"Raised when there are issues with deterministic mode configuration.\"\"\"
+    """
+    Raised when there are issues with deterministic mode configuration.
 
-    def __init__(self, message: str,
-                 values: Optional[Union[Dict, list]] = None,
+    This exception occurs when there are problems with predefined
+    deterministic roll values or mode configuration.
+    """
+    def __init__(self, 
+                 message: str, 
+                 values: Optional[Union[dict, list]] = None,
                  error_type: Optional[str] = None):
-        \"\"\"
+        """
         Initialize the deterministic mode error.
 
         Args:
-            message (str): Error message.
-            values (Optional[Union[Dict, list]]): Problematic deterministic values.
-            error_type (Optional[str]): Specific deterministic error type.
-        \"\"\"
+            message (str): Detailed error message
+            values (dict or list, optional): The problematic deterministic values
+            error_type (str, optional): Specific type of deterministic mode error
+        """
         context = {
             'values': values,
             'error_type': error_type
@@ -168,12 +208,3 @@ class DeterministicModeError(DiceParserError):
         super().__init__(message, context=context)
         self.values = values
         self.error_type = error_type
-"""
-
-# Write the updated content to a file
-from pathlib import Path
-
-output_path = Path("/mnt/data/dice_parser_exceptions_fixed.py")
-output_path.write_text(updated_exceptions_content)
-
-output_path.name

@@ -1,95 +1,185 @@
-"""Character Loader Module for Call of Cthulhu Character Viewer
+"""
+Character Display Module for Call of Cthulhu Character Viewer
 
-Handles loading character data from JSON files with efficient caching and validation.
+This module handles the formatting and display of character information,
+providing consistent representation of character data in the console.
+
+The module focuses solely on character display logic, separated from
+user interface interaction and character data loading.
+
+Author: Unknown
+Version: 1.0
+Last Updated: 2025-03-30
 """
 
-import os
-import json
-from src.character_cache_core import CharacterCache
 
-# Constants
-REQUIRED_FIELDS = ['name', 'attributes']
-JSON_EXTENSION = '.json'
-DEFAULT_DIRECTORY = "characters"
-DEFAULT_ENCODING = 'utf-8'
-JSON_INDENT = 2
+def display_character(character_data):
+    """
+    Display a character's sheet in a formatted way to the console.
 
-def validate_character_data(character_data):
-    """Ensure character data has all required fields."""
-    return all(field in character_data for field in REQUIRED_FIELDS)
+    Prints all relevant character information including:
+    - Basic info (name, age, occupation)
+    - Attributes (STR, DEX, etc.)
+    - Skills
+    - Weapons
+    - Backstory
 
-def load_character_from_json(filename, cache):
-    """Load a character from a JSON file, using cache if applicable."""
-    try:
-        character_data, status = cache.load_character(filename, validate_character_data)
-        if status in ["cache_hit", "loaded_from_file"]:
-            return character_data
-        elif status == "validation_failed":
-            print(f"Error: Missing required fields in '{filename}'.")
-        elif status == "file_not_found":
-            print(f"Error: File '{filename}' not found.")
-        elif status == "invalid_json":
-            print(f"Error: Invalid JSON format in '{filename}'.")
-        else:
-            print(f"Error loading character from '{filename}': {status}")
-    except PermissionError:
-        print(f"Error: No permission to access '{filename}'.")
-    except OSError as e:
-        print(f"Error accessing '{filename}': {e}")
-    except Exception as e:
-        print(f"Unexpected error loading character from '{filename}': {e}")
-    return None
+    Args:
+        character_data (dict): Dictionary containing the character data
 
-def load_all_characters(directory=DEFAULT_DIRECTORY, cache=None):
-    """Load all characters from a directory of JSON files, using cache if provided."""
-    characters = {}
-    try:
-        if not os.path.exists(directory):
-            print(f"Error: Directory '{directory}' not found.")
-            return characters
+    Returns:
+        None
+    """
+    if not character_data:
+        print("Error: No character data to display.")
+        return
 
-        if cache is None:
-            cache = CharacterCache()
+    # Print divider line and basic character information
+    print("\n" + "=" * 50)
+    print(f"Name: {character_data['name']}")
+    print(f"Age: {character_data.get('age', 'Unknown')}")
+    print(f"Occupation: {character_data.get('occupation', 'Unknown')}")
+    print(f"Nationality: {character_data.get('nationality', 'Unknown')}")
 
-        for filename in os.listdir(directory):
-            if filename.endswith(JSON_EXTENSION):
-                full_path = os.path.join(directory, filename)
-                try:
-                    character_data = load_character_from_json(full_path, cache)
-                    if character_data:
-                        characters[full_path] = character_data
-                except Exception as e:
-                    print(f"Error loading character from '{full_path}': {e}")
-        return characters
-    except PermissionError:
-        print(f"Error: No permission to access directory '{directory}'.")
-        return characters
-    except Exception as e:
-        print(f"Error loading characters from directory '{directory}': {e}")
-        return characters
+    # Print character attributes
+    print("\n--- Attributes ---")
+    for attr, value in character_data.get('attributes', {}).items():
+        print(f"{attr}: {value}")
 
-def save_character_to_json(character_data, filename, cache=None):
-    """Save character data to JSON file and optionally update cache."""
-    try:
-        if not validate_character_data(character_data):
-            print(f"Error: Cannot save invalid character data to '{filename}'.")
-            return False
+    # Print character skills if available
+    if 'skills' in character_data:
+        print("\n--- Skills ---")
+        for skill, value in character_data['skills'].items():
+            print(f"{skill}: {value}")
 
-        directory = os.path.dirname(filename)
-        if directory and not os.path.exists(directory):
-            os.makedirs(directory)
+    # Print character weapons if available
+    if 'weapons' in character_data:
+        print("\n--- Weapons ---")
+        for weapon in character_data['weapons']:
+            print(
+                f"{weapon['name']} - Skill: {weapon['skill']} - Damage: {weapon['damage']}"
+            )
 
-        with open(filename, 'w', encoding=DEFAULT_ENCODING) as f:
-            json.dump(character_data, f, indent=JSON_INDENT)
+    # Print character backstory if available
+    if 'backstory' in character_data:
+        print("\n--- Backstory ---")
+        print(character_data['backstory'])
 
-        if cache is not None:
-            cache.put(filename, character_data)
+    # Print character description if available
+    if 'description' in character_data:
+        print("\n--- Description ---")
+        print(character_data['description'])
 
-        return True
-    except PermissionError:
-        print(f"Error: No permission to write to '{filename}'.")
-    except OSError as e:
-        print(f"Error writing to '{filename}': {e}")
-    except Exception as e:
-        print(f"Unexpected error saving character to '{filename}': {e}")
-    return False
+    # Print character traits if available
+    if 'traits' in character_data:
+        print("\n--- Traits ---")
+        print(character_data['traits'])
+
+    # Print character ideology if available
+    if 'ideology' in character_data:
+        print("\n--- Ideology/Beliefs ---")
+        print(character_data['ideology'])
+
+    # Print treasured possession if available
+    if 'treasuredPossession' in character_data:
+        print("\n--- Treasured Possession ---")
+        print(character_data['treasuredPossession'])
+
+    # Print any notes if available
+    if 'notes' in character_data:
+        print("\n--- Notes ---")
+        print(character_data['notes'])
+
+    # Print closing divider
+    print("=" * 50 + "\n")
+
+
+def display_character_summary(metadata):
+    """
+    Display a brief summary of a character based on metadata.
+
+    This function is used for showing character information in lists
+    without loading the full character data.
+
+    Args:
+        metadata (CharacterMetadata): Metadata object containing basic character info
+
+    Returns:
+        None
+    """
+    print(f"{metadata.name} - {metadata.occupation} ({metadata.nationality})")
+
+
+def format_attribute_value(value, max_value=100):
+    """
+    Format an attribute value for display, potentially with visual indicators.
+
+    Args:
+        value (int): The attribute value to format
+        max_value (int, optional): The maximum possible value. Defaults to 100.
+
+    Returns:
+        str: Formatted attribute value string
+    """
+    # Basic formatting
+    formatted_value = str(value)
+
+    # Optional: Add visual indicators for very high or low values
+    if value >= max_value * 0.9:  # 90% or more of max
+        formatted_value = f"{formatted_value} (Exceptional)"
+    elif value <= max_value * 0.2:  # 20% or less of max
+        formatted_value = f"{formatted_value} (Poor)"
+
+    return formatted_value
+
+
+def format_skill_value(value):
+    """
+    Format a skill value for display, including success thresholds.
+
+    In Call of Cthulhu, skill checks succeed on rolls <= skill value,
+    with special success levels at half and one-fifth the skill value.
+
+    Args:
+        value (int): The skill value to format
+
+    Returns:
+        str: Formatted skill value string with success thresholds
+    """
+    regular = value
+    hard = value // 2
+    extreme = value // 5
+
+    return f"{value} (Hard: {hard}, Extreme: {extreme})"
+
+
+def display_cache_stats(stats):
+    """
+    Display statistics about the character cache in a formatted way.
+
+    Args:
+        stats (dict): Dictionary with cache statistics
+
+    Returns:
+        None
+    """
+    print("\n--- Cache Status ---")
+    print(f"Characters in cache: {stats['size']}")
+    print(f"Maximum cache size: {stats['max_size']}")
+    print(f"Approximate memory usage: {stats['memory_usage']} bytes")
+
+    # Display hit rate statistics
+    total_accesses = stats.get('hits', 0) + stats.get('misses', 0)
+    if total_accesses > 0:
+        print(f"Cache hit rate: {stats.get('hit_rate', 0):.1f}% ({stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses)")
+
+    if stats['size'] > 0:
+        print("\nCached characters:")
+        for i, char_file in enumerate(stats['files'], 1):
+            print(f"{i}. {char_file}")
+
+        if 'oldest_entry_age' in stats:
+            print(f"\nOldest entry age: {stats['oldest_entry_age']:.1f} seconds")
+            print(f"Newest entry age: {stats['newest_entry_age']:.1f} seconds")
+    else:
+        print("\nNo characters in cache.")
