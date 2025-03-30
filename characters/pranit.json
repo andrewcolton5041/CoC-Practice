@@ -1,0 +1,71 @@
+{
+  "name": "Pranit Singh Dhillon",
+  "age": 29,
+  "attributes": {
+    "Strength": 75,
+    "Constitution": 65,
+    "Size": 80,
+    "Dexterity": 65,
+    "Intelligence": 65,
+    "Appearance": 75,
+    "Power": 60,
+    "Education": 65,
+    "Luck": 0,
+    "Sanity": 60,
+    "Magic": 12,
+    "HP": 14,
+    "Movement": 7,
+    "Damage Bonus": "+1D4",
+    "Build": 1
+  },
+  "occupation": "Ex-Soldier",
+  "nationality": "Indian",
+  "skills": {
+    "Climb": 50,
+    "Credit Rating": 20,
+    "Intimidate": 55,
+    "Language (Arabic)": 31,
+    "Language (English/Punjabi)": 65,
+    "Language (Spanish)": 31,
+    "Listen": 35,
+    "Spot Hidden": 55,
+    "Stealth": 60,
+    "Survival (Desert)": 30,
+    "Throw": 60,
+    "Brawl": 65,
+    "Dodge": 65
+  },
+  "weapons": [
+    {
+      "name": "Brawl",
+      "skill": 65,
+      "damage": "1D3+1D4"
+    },
+    {
+      "name": "Kirpan (knife)",
+      "skill": 65,
+      "damage": "1D4+2+1D4"
+    },
+    {
+      "name": "Saber (sword)",
+      "skill": 60,
+      "damage": "1D8+1+1D4"
+    },
+    {
+      "name": "Chakram (thrown)",
+      "skill": 60,
+      "damage": "1D8+1D2",
+      "range": "40 yards"
+    },
+    {
+      "name": ".45 Martini-Henry rifle",
+      "skill": 55,
+      "damage": "1D8+1D6+3"
+    }
+  ],
+  "backstory": "Born and raised in the Punjabi city of Ferozepore, Pranit's family have a long history of military service; first for the Maharajas of the Sikh Empire, and then for the British after the empire's fall. Keen to follow in his forebears' footsteps, Pranit joined the 14th Prince of Wales's Own Ferozepore Sikhs as soon as he could. During the Great War, the battalion saw service in Egypt, Gallipoli, Persia, and Mesopotamia (where the valor of the Sikh soldiers earned them the nickname \"the Black Lions\").",
+  "description": "Indian, tall and handsome, with piercing eyes, an unkempt beard, and a pale-blue turban.",
+  "traits": "Proud and loyal to those he considers his comrades.",
+  "ideology": "God is one, and all men (and women) are equal.",
+  "treasuredPossession": "The five Ks (the articles of his faith), including his kangha (ivory comb), kara (steel bangle), and kirpan (ceremonial knife)."
+}

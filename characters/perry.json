@@ -1,0 +1,73 @@
+{
+  "name": "Perry Astor",
+  "age": 36,
+  "attributes": {
+    "Strength": 70,
+    "Constitution": 70,
+    "Size": 60,
+    "Dexterity": 70,
+    "Intelligence": 50,
+    "Appearance": 50,
+    "Power": 65,
+    "Education": 25,
+    "Luck": 0,
+    "Sanity": 65,
+    "Magic": 13,
+    "HP": 13,
+    "Movement": 9,
+    "Damage Bonus": "+1D4",
+    "Build": 1
+  },
+  "occupation": "Explorer",
+  "nationality": "Canadian",
+  "skills": {
+    "Climb": 25,
+    "Credit Rating": 25,
+    "Intimidate": 40,
+    "Jump": 40,
+    "Language (English)": 25,
+    "Language (Spanish)": 11,
+    "Listen": 30,
+    "Mechanical Repair": 40,
+    "Natural World": 30,
+    "Navigate": 40,
+    "Psychology": 25,
+    "Ride": 60,
+    "Spot Hidden": 30,
+    "Stealth": 40,
+    "Survival (Desert)": 30,
+    "Survival (Jungle)": 15,
+    "Throw": 30,
+    "Track": 30,
+    "Brawl": 50,
+    "Dodge": 35
+  },
+  "weapons": [
+    {
+      "name": "Brawl",
+      "skill": 50,
+      "damage": "1D3+1D4"
+    },
+    {
+      "name": ".45 revolver handgun",
+      "skill": 45,
+      "damage": "1D10+2"
+    },
+    {
+      "name": ".30-06 bolt-action rifle",
+      "skill": 60,
+      "damage": "2D6+4"
+    },
+    {
+      "name": "Bowie knife (Mary)",
+      "skill": 50,
+      "damage": "1D4+2+1D4"
+    }
+  ],
+  "backstory": "As a youngster, Perry lived to feel the wind rushing through his hair as he raced at breakneck speed on horseback around his father's ranch. \"Tough as jerky\" his father used to call him. Book-learning wasn't Perry's style, he preferred getting his hands all bloody and muddy at any opportunity, and despite the wishes of his father, was too full of spunk for the life of a rancher and yearned for adventure. At the age of 17, Perry took off and set about seeing the world. Over the years he has traveled extensively across North and South America, working all manner of jobs to pay his way.",
+  "description": "White Canadian, tall, with weathered features and short, unruly hair usually hidden beneath his hat.",
+  "traits": "Wanderlust: irritable when sat still for too long. Sometimes a little too quick to anger.",
+  "ideology": "A man learns by doing and getting his hands dirty.",
+  "treasuredPossession": "\"Mary,\" the Bowie knife given to him by his father.",
+  "notes": "Although he doesn't know it, Perry suffers from dyslexia: the root cause for his dislike of books and reading."
+}

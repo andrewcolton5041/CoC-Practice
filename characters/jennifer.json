@@ -1,0 +1,60 @@
+{
+  "name": "Jennifer Smallwood",
+  "age": 36,
+  "attributes": {
+    "Strength": 35,
+    "Constitution": 70,
+    "Size": 50,
+    "Dexterity": 70,
+    "Intelligence": 65,
+    "Appearance": 55,
+    "Power": 60,
+    "Education": 60,
+    "Luck": 0,
+    "Sanity": 60,
+    "Magic": 12,
+    "HP": 12,
+    "Movement": 8,
+    "Damage Bonus": "None",
+    "Build": 0
+  },
+  "occupation": "Dilettante",
+  "nationality": "English",
+  "skills": {
+    "Art/Craft (Dancing)": 35,
+    "Charm": 50,
+    "Climb": 25,
+    "Credit Rating": 80,
+    "Disguise": 40,
+    "Intimidate": 30,
+    "Jump": 35,
+    "Language (English)": 60,
+    "Language (French)": 20,
+    "Listen": 30,
+    "Navigate": 30,
+    "Psychology": 20,
+    "Ride": 35,
+    "Spot Hidden": 30,
+    "Stealth": 30,
+    "Swim": 25,
+    "Brawl": 30,
+    "Dodge": 45
+  },
+  "weapons": [
+    {
+      "name": "Brawl",
+      "skill": 30,
+      "damage": "1D3"
+    },
+    {
+      "name": "12g shotgun (2B)",
+      "skill": 40,
+      "damage": "4D6/2D6/1D6"
+    }
+  ],
+  "backstory": "Jennifer heralds from an English family, whose wealth was accumulated during the early 19th century though shipping ventures. Her parents were lost at sea in 1888 while on board the SS Vaitarna on route to Bombay, leaving Jennifer and her older sister Valerie the heirs to the Smallwood fortune. While Valerie preferred to remain at the family's home in Hampshire, Jennifer packed her bags and elected to travel to the New World. The decision strained her relationship with her sister, who considered a lady's job was to find a suitable husband and not go gallivanting to foreign climes.",
+  "description": "White English, tall and slender, with dark hair sporting a fashionable bobbed cut.",
+  "traits": "Adventurous, fool hardy, and forever on the go.",
+  "ideology": "Sometimes you have to crack a few eggs to make an omelet (i.e. get things done). Devout Catholic upbringing.",
+  "treasuredPossession": "Travel wallet containing a photograph of her family in happy times; a gold necklace given to her by departed father."
+}

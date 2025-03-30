@@ -1,0 +1,55 @@
+{
+  "name": "Johan Braun",
+  "age": 48,
+  "attributes": {
+    "Strength": 55,
+    "Constitution": 60,
+    "Size": 50,
+    "Dexterity": 70,
+    "Intelligence": 65,
+    "Appearance": 45,
+    "Power": 70,
+    "Education": 85,
+    "Luck": 0,
+    "Sanity": 70,
+    "Magic": 14,
+    "HP": 11,
+    "Movement": 8,
+    "Damage Bonus": "None",
+    "Build": 0
+  },
+  "occupation": "Professor of Languages",
+  "nationality": "German",
+  "skills": {
+    "Appraise": 30,
+    "Credit Rating": 31,
+    "History": 30,
+    "Intimidate": 30,
+    "Language (Arabic)": 40,
+    "Language (Cuneiform)": 20,
+    "Language (English)": 60,
+    "Language (German)": 85,
+    "Language (Greek)": 50,
+    "Language (Spanish)": 30,
+    "Law": 20,
+    "Library Use": 60,
+    "Occult": 20,
+    "Persuade": 40,
+    "Psychology": 40,
+    "Spot Hidden": 30,
+    "Brawl": 25,
+    "Dodge": 40
+  },
+  "weapons": [
+    {
+      "name": "Brawl",
+      "skill": 25,
+      "damage": "1D3"
+    }
+  ],
+  "backstory": "Johan's mother was a librarian and his father a language teacher, which may explain his great love of books and languages: throughout childhood, the young boy was surrounded with books on science, history, myths, and more. The top of his class, Johan pursued an academic career, reading languages and classics at the University of Würzburg in Bavaria. It was while teaching at his alma mater that the Great War broke out and Johan was called to serve on the Western Front. Surviving the horrors of the trenches, he left Europe as quickly as he could and headed to America to take up a post at the University of California in Berkeley.",
+  "description": "White German, short and a little overweight, with receding hair, a beard, and a prominent mustache.",
+  "traits": "Dives for cover when hearing a loud noise (compliments of his war experience); a distinct thirst for knowledge.",
+  "ideology": "The war was a terrible mistake and humanity should never succumb to such base instincts again: we must work together to build a better future free from the horrors of the past.",
+  "treasuredPossession": "The silver hip flask that saved his life: the English bullet is still lodged tightly in the metal."
+}

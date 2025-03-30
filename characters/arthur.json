@@ -1,0 +1,59 @@
+{
+  "name": "Doctor Arthur Dibden",
+  "age": 45,
+  "attributes": {
+    "Strength": 50,
+    "Constitution": 50,
+    "Size": 80,
+    "Dexterity": 70,
+    "Intelligence": 65,
+    "Appearance": 35,
+    "Power": 60,
+    "Education": 84,
+    "Luck": 0,
+    "Sanity": 54,
+    "Magic": 12,
+    "HP": 13,
+    "Movement": 6,
+    "Damage Bonus": "+1D4",
+    "Build": 1
+  },
+  "occupation": "Medical Doctor/Surgeon",
+  "nationality": "English",
+  "skills": {
+    "Credit Rating": 40,
+    "First Aid": 70,
+    "Intimidate": 20,
+    "Language (English)": 84,
+    "Language (French)": 20,
+    "Language (Latin)": 20,
+    "Language (Spanish)": 20,
+    "Medicine": 75,
+    "Persuade": 40,
+    "Psychoanalysis": 30,
+    "Psychology": 40,
+    "Science (Biology)": 40,
+    "Science (Pharmacy)": 35,
+    "Spot Hidden": 40,
+    "Throw": 40,
+    "Brawl": 25,
+    "Dodge": 35
+  },
+  "weapons": [
+    {
+      "name": "Brawl",
+      "skill": 25,
+      "damage": "1D3+1D4"
+    },
+    {
+      "name": ".32 revolver handgun",
+      "skill": 30,
+      "damage": "1D8"
+    }
+  ],
+  "backstory": "Dibden served in the Royal Army Medical Corps for over twenty years. A brief marriage to his childhood sweetheart, Mary, ended in tragedy when she died in childbirth. Having lost both his love and his baby, Dibden lost himself in his work and service. Despite his experiences of the horrors of modern warfare during the Great War, his desire for travel was undiminished and, after the war, he journeyed across the Atlantic to the Americas. While initially enjoying the sights of the USA, his fascination for South America led him to Mexico, and then down to Colombia. Over the last few months, Dibden has provided medical assistance in the aftermath of the Spanish 'Flu epidemic.",
+  "description": "Above average height and quite heavily built, with graying hair and lined features, his eyes have a haunted look.",
+  "traits": "Caring, but doesn't suffer fools lightly. Seeks escape from the horrors of the past.",
+  "ideology": "Has turned to atheism after all he has seen and experienced.",
+  "treasuredPossession": "Locket round his neck that contains a picture of his wife Mary."
+}

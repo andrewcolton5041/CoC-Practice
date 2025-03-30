@@ -1,0 +1,60 @@
+{
+  "name": "Archibald Washington",
+  "age": 26,
+  "attributes": {
+    "Strength": 85,
+    "Constitution": 70,
+    "Size": 70,
+    "Dexterity": 70,
+    "Intelligence": 70,
+    "Appearance": 60,
+    "Power": 50,
+    "Education": 45,
+    "Luck": 0,
+    "Sanity": 50,
+    "Magic": 10,
+    "HP": 14,
+    "Movement": 8,
+    "Damage Bonus": "+1D4",
+    "Build": 1
+  },
+  "occupation": "Engineer",
+  "nationality": "American",
+  "skills": {
+    "Climb": 40,
+    "Credit Rating": 10,
+    "Drive Auto": 40,
+    "Fast Talk": 45,
+    "Intimidate": 60,
+    "Jump": 40,
+    "Language (English)": 45,
+    "Listen": 30,
+    "Mechanical Repair": 60,
+    "Psychology": 30,
+    "Science (Engineering)": 70,
+    "Spot Hidden": 40,
+    "Stealth": 40,
+    "Swim": 50,
+    "Throw": 50,
+    "Brawl": 70,
+    "Firearms (Rifle)": 50,
+    "Dodge": 35
+  },
+  "weapons": [
+    {
+      "name": "Brawl",
+      "skill": 70,
+      "damage": "1D3+1D4"
+    },
+    {
+      "name": ".38 revolver handgun",
+      "skill": 60,
+      "damage": "1D10"
+    }
+  ],
+  "backstory": "Archibald spent his youth in Boston getting into trouble on the streets and with the law; everyone believed he'd spend the majority of his life inside a jail, that is until he discovered boxing. Directing all of his energy into the sport, he focused on winning matches and rose quickly through the ranks to become a real contender. Yet, fortune was never on his side. On the eve of title fight, he was 'advised' to throw the fight or his family would face the consequences. He lost but hated himself for doing so. Driven by his innate sense of justice, he killed the gangster who had threatened his family and fled Boston, joining up with the Army to fight in the war where he was trained in engineering.",
+  "description": "African American, with a broad and well-built physique; a handsome face belies his boxing career.",
+  "ideology": "Hates bullies and those who think they are superior; has a strong sense of justice and seeks to put matters right (even if it means stepping outside of the law).",
+  "treasuredPossession": "Photograph of his late mother, which he keeps in his wallet.",
+  "notes": "Archibald does not own a rifle."
+}

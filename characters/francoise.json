@@ -1,0 +1,50 @@
+{
+  "name": "Françoise Pelletier",
+  "age": 33,
+  "attributes": {
+    "Strength": 55,
+    "Constitution": 60,
+    "Size": 55,
+    "Dexterity": 65,
+    "Intelligence": 70,
+    "Appearance": 55,
+    "Power": 70,
+    "Education": 65,
+    "Luck": 0,
+    "Sanity": 70,
+    "Magic": 14,
+    "HP": 11,
+    "Movement": 8,
+    "Damage Bonus": "None",
+    "Build": 0
+  },
+  "occupation": "Photographer",
+  "nationality": "French",
+  "skills": {
+    "Art/Craft (Photography)": 65,
+    "Charm": 65,
+    "Credit Rating": 30,
+    "Drive Auto": 30,
+    "Language (English)": 30,
+    "Language (French)": 65,
+    "Language (Spanish)": 50,
+    "Persuade": 50,
+    "Psychology": 60,
+    "Science (Chemistry)": 40,
+    "Spot Hidden": 65,
+    "Brawl": 25,
+    "Dodge": 40
+  },
+  "weapons": [
+    {
+      "name": "Brawl",
+      "skill": 25,
+      "damage": "1D3"
+    }
+  ],
+  "backstory": "The daughter of a naval attaché, Françoise had never lived anywhere long enough to consider it home. When her father was stationed in Lima as part of France's ongoing military mission to Peru, Françoise was dazzled by the nightlife of her adoptive city, and she drifted in and out of the social scene, struggling to find a place for herself that wasn't defined by her father's occupation. The chance gift of a camera for her 21st birthday gave her the answer, and she has steadily built a reputation for herself in Lima as a portrait photographer of some renown.",
+  "description": "White French; wavy, blonde hair, with a broad smile. She dresses in male attire whenever she thinks she can get away with it. Her hazel eyes constantly search for the best angle for a shot.",
+  "traits": "Determined and stubborn.",
+  "ideology": "Believes a woman is just as capable as any man, and eager to prove the point.",
+  "treasuredPossession": "Her camera."
+}
