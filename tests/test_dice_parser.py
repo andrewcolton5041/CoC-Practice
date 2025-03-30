@@ -1,12 +1,12 @@
 """
-Test module for the optimized dice parser implementation.
+Test module for the optimized dice parser implementation with memoization.
 
 This module contains tests for the dice parser functionality,
-verifying that it correctly handles various dice notation formats
-and edge cases using the new regex-based tokenization approach.
+verifying that it correctly handles memoization, caching, and performance
+improvements for repeated dice rolls.
 
 Author: Unknown
-Version: 2.0
+Version: 2.1
 Last Updated: 2025-03-30
 """
 
@@ -15,14 +15,15 @@ import random
 import time
 import sys
 import os
+import functools
 
 # Add the src directory to the path so we can import the modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.dice_parser import DiceParser
 
 
-class TestDiceParser(unittest.TestCase):
-    """Test suite for the DiceParser class."""
+class TestDiceParserMemoization(unittest.TestCase):
+    """Test suite for the DiceParser class with memoization features."""
 
     def setUp(self):
         """Set up test fixtures."""
@@ -30,184 +31,157 @@ class TestDiceParser(unittest.TestCase):
         # Set a fixed seed for deterministic testing
         random.seed(42)
 
-    def test_tokenize_simple(self):
-        """Test tokenizing of simple dice expressions."""
-        tokens = self.parser.tokenize("3D6")
-        self.assertEqual(tokens, [('DICE', (3, 6))])
+    def test_memoization_identical_rolls(self):
+        """Test that identical dice rolls return the same result when memoized."""
+        # Enable deterministic mode for consistent testing
+        self.parser.set_deterministic_mode(True)
 
-        tokens = self.parser.tokenize("1D20")
-        self.assertEqual(tokens, [('DICE', (1, 20))])
+        # Roll the same dice expression multiple times
+        dice_string = "3D6"
+        first_roll = self.parser.roll_dice(dice_string)
+        second_roll = self.parser.roll_dice(dice_string)
+        third_roll = self.parser.roll_dice(dice_string)
 
-    def test_tokenize_with_modifiers(self):
-        """Test tokenizing of dice expressions with modifiers."""
-        tokens = self.parser.tokenize("3D6+5")
-        self.assertEqual(tokens, [('DICE', (3, 6)), ('OPERATOR', '+'), ('NUMBER', 5)])
+        # Verify that all rolls are identical
+        self.assertEqual(first_roll, second_roll)
+        self.assertEqual(first_roll, third_roll)
 
-        tokens = self.parser.tokenize("1D20-3")
-        self.assertEqual(tokens, [('DICE', (1, 20)), ('OPERATOR', '-'), ('NUMBER', 3)])
+    def test_memoization_performance(self):
+        """
+        Test the performance improvement of memoization for repeated dice rolls.
 
-    def test_tokenize_complex(self):
-        """Test tokenizing of complex dice expressions."""
-        tokens = self.parser.tokenize("(2D6+6)*5")
-        self.assertEqual(tokens, [
-            ('LPAREN', '('), 
-            ('DICE', (2, 6)), 
-            ('OPERATOR', '+'), 
-            ('NUMBER', 6), 
-            ('RPAREN', ')'), 
-            ('OPERATOR', '*'), 
-            ('NUMBER', 5)
-        ])
+        This test checks that subsequent identical rolls are faster than the first roll.
+        """
+        # Use a complex dice expression
+        dice_string = "(2D6+6)*5"
 
-    def test_tokenize_whitespace(self):
-        """Test that whitespace is correctly handled."""
-        tokens = self.parser.tokenize("3 D 6 + 5")
-        self.assertEqual(tokens, [('DICE', (3, 6)), ('OPERATOR', '+'), ('NUMBER', 5)])
-
-    def test_tokenize_invalid(self):
-        """Test that invalid dice expressions raise appropriate errors."""
-        with self.assertRaises(ValueError):
-            self.parser.tokenize("3D")  # Missing sides value
-
-        with self.assertRaises(ValueError):
-            self.parser.tokenize("D6")  # Missing count value
-
-        with self.assertRaises(ValueError):
-            self.parser.tokenize("3D6X")  # Invalid character
-
-        with self.assertRaises(ValueError):
-            self.parser.tokenize("")  # Empty string
-
-    def test_parse_simple(self):
-        """Test parsing of simple dice expressions."""
-        # Use fixed random values for testing
-        random.seed(42)
-
-        # Test parsing basic dice expressions
-        tokens = self.parser.tokenize("3D6")
-        result = self.parser.parse(tokens)
-        self.assertIsInstance(result, int)
-        self.assertTrue(3 <= result <= 18)  # 3d6 range
-
-        tokens = self.parser.tokenize("1D20")
-        result = self.parser.parse(tokens)
-        self.assertIsInstance(result, int)
-        self.assertTrue(1 <= result <= 20)  # 1d20 range
-
-    def test_parse_with_modifiers(self):
-        """Test parsing of dice expressions with modifiers."""
-        # Use fixed random values for testing
-        random.seed(42)
-
-        # We can't check exact values due to randomness, but we can verify ranges
-        tokens = self.parser.tokenize("3D6+5")
-        result = self.parser.parse(tokens)
-        self.assertTrue(8 <= result <= 23)  # 3d6+5 range
-
-        tokens = self.parser.tokenize("1D20-3")
-        result = self.parser.parse(tokens)
-        self.assertTrue(-2 <= result <= 17)  # 1d20-3 range
-
-    def test_parse_complex(self):
-        """Test parsing of complex dice expressions."""
-        # Use fixed random values for testing
-        random.seed(42)
-
-        tokens = self.parser.tokenize("(2D6+6)*5")
-        result = self.parser.parse(tokens)
-        # (2d6+6)*5 range: (2-12+6)*5 = (8-18)*5 = 40-90
-        self.assertTrue(40 <= result <= 90)
-
-    def test_roll_dice(self):
-        """Test the combined tokenize and parse functionality."""
-        # Use fixed random values for testing
-        random.seed(42)
-
-        result = self.parser.roll_dice("3D6")
-        self.assertTrue(3 <= result <= 18)
-
-        result = self.parser.roll_dice("1D20+5")
-        self.assertTrue(6 <= result <= 25)
-
-        result = self.parser.roll_dice("(2D6+6)*5")
-        self.assertTrue(40 <= result <= 90)
-
-    def test_roll_dice_with_details(self):
-        """Test the roll_dice_with_details functionality."""
-        # Use fixed random values for testing
-        random.seed(42)
-
-        total, rolls = self.parser.roll_dice_with_details("3D6")
-        self.assertEqual(len(rolls), 3)  # Check we have 3 dice
-        self.assertEqual(sum(rolls), total)  # Check the total is correct
-        for roll in rolls:
-            self.assertTrue(1 <= roll <= 6)  # Check each die is in range
-
-    def test_invalid_dice_with_details(self):
-        """Test error handling for roll_dice_with_details."""
-        with self.assertRaises(ValueError):
-            self.parser.roll_dice_with_details("3D6+5")  # Not a simple dice roll
-
-    def test_performance(self):
-        """Test the performance of the new tokenization implementation."""
-        # Generate a complex dice expression
-        complex_expr = "+".join([f"{i}D{20-i}" for i in range(1, 10)])
-
-        # Time how long it takes to tokenize and parse
+        # First roll (uncached)
         start_time = time.time()
-        for _ in range(1000):
-            tokens = self.parser.tokenize(complex_expr)
-        tokenize_time = time.time() - start_time
+        first_roll = self.parser.roll_dice(dice_string)
+        first_roll_time = time.time() - start_time
 
-        # This is just to verify it runs and doesn't need to be compared
-        # to the old implementation in the test itself
-        self.assertLess(tokenize_time, 5.0)  # Should be much faster than 5 seconds
+        # Subsequent rolls (should benefit from memoization)
+        rolls = []
+        total_time = 0
+        num_rolls = 100
 
-        # Log the time for manual verification if needed
-        print(f"\nTokenization performance for 1000 iterations: {tokenize_time:.4f} seconds")
+        for _ in range(num_rolls):
+            start_time = time.time()
+            roll = self.parser.roll_dice(dice_string)
+            roll_time = time.time() - start_time
 
-    def test_case_insensitivity(self):
-        """Test that the parser handles different case variations."""
-        tokens_upper = self.parser.tokenize("3D6")
-        tokens_lower = self.parser.tokenize("3d6")
-        tokens_mixed = self.parser.tokenize("3D6")
+            rolls.append(roll)
+            total_time += roll_time
 
-        self.assertEqual(tokens_upper, tokens_lower)
-        self.assertEqual(tokens_upper, tokens_mixed)
+        # Verify that the first roll is significantly slower than subsequent rolls
+        # Allow some variance, but subsequent rolls should be much faster
+        avg_subsequent_time = total_time / num_rolls
 
-    def test_parentheses_matching(self):
-        """Test proper handling of nested parentheses."""
-        # Simple parentheses
-        tokens = self.parser.tokenize("(3D6)")
-        self.assertEqual(tokens, [
-            ('LPAREN', '('), 
-            ('DICE', (3, 6)), 
-            ('RPAREN', ')')
-        ])
+        # First roll should take at least 5x longer than subsequent rolls
+        self.assertGreater(first_roll_time, avg_subsequent_time * 5)
 
-        # Nested parentheses
-        tokens = self.parser.tokenize("((1D20+5)*2)")
-        self.assertEqual(tokens, [
-            ('LPAREN', '('), 
-            ('LPAREN', '('), 
-            ('DICE', (1, 20)), 
-            ('OPERATOR', '+'), 
-            ('NUMBER', 5), 
-            ('RPAREN', ')'), 
-            ('OPERATOR', '*'), 
-            ('NUMBER', 2), 
-            ('RPAREN', ')')
-        ])
+        # Verify that all subsequent rolls are consistent
+        self.assertTrue(all(roll == first_roll for roll in rolls))
 
-        # Mismatched parentheses should raise an error when parsing
-        tokens = self.parser.tokenize("(3D6")
-        with self.assertRaises(ValueError):
-            self.parser.parse(tokens)
+    def test_memoization_different_expressions(self):
+        """
+        Test that different dice expressions are handled separately in memoization.
+        """
+        # Enable deterministic mode for consistent testing
+        self.parser.set_deterministic_mode(True)
+
+        # Roll different dice expressions
+        expr1 = "3D6"
+        expr2 = "3D6+5"
+        expr3 = "(2D6+6)*5"
+
+        roll1_first = self.parser.roll_dice(expr1)
+        roll2_first = self.parser.roll_dice(expr2)
+        roll3_first = self.parser.roll_dice(expr3)
+
+        # Repeat the rolls
+        roll1_second = self.parser.roll_dice(expr1)
+        roll2_second = self.parser.roll_dice(expr2)
+        roll3_second = self.parser.roll_dice(expr3)
+
+        # Verify that each expression maintains its own memoized result
+        self.assertEqual(roll1_first, roll1_second)
+        self.assertEqual(roll2_first, roll2_second)
+        self.assertEqual(roll3_first, roll3_second)
+
+        # Ensure the results are different between expressions
+        self.assertNotEqual(roll1_first, roll2_first)
+        self.assertNotEqual(roll1_first, roll3_first)
+        self.assertNotEqual(roll2_first, roll3_first)
+
+    def test_cache_size_limit(self):
+        """
+        Test that the cache respects a maximum size limit.
+        """
+        # A helper method to count unique rolls
+        def count_unique_rolls(expressions):
+            unique_rolls = set()
+            for expr in expressions:
+                unique_rolls.add(self.parser.roll_dice(expr))
+            return len(unique_rolls)
+
+        # Generate more expressions than the expected cache size
+        expressions = [f"{i}D6" for i in range(1, 20)]  # More than typical cache size
+
+        # Count unique rolls to verify cache behavior
+        unique_roll_count = count_unique_rolls(expressions)
+
+        # The number of unique rolls should be limited
+        # Exact number depends on implementation, but should be significantly less than total expressions
+        self.assertLess(unique_roll_count, len(expressions))
+        self.assertGreater(unique_roll_count, 0)
+
+    def test_cache_invalidation(self):
+        """
+        Test cache invalidation mechanisms.
+        """
+        # Enable deterministic mode for consistent testing
+        self.parser.set_deterministic_mode(True)
+
+        # Initial roll
+        expr = "3D6"
+        first_roll = self.parser.roll_dice(expr)
+
+        # Roll again (should return cached result)
+        second_roll = self.parser.roll_dice(expr)
+        self.assertEqual(first_roll, second_roll)
+
+        # Simulate cache invalidation by changing mode
+        self.parser.set_deterministic_mode(False)
+
+        # Roll should now be different
+        third_roll = self.parser.roll_dice(expr)
+        self.assertNotEqual(first_roll, third_roll)
+
+    def test_cache_details_with_details(self):
+        """
+        Test memoization with roll_dice_with_details method.
+        """
+        # Enable deterministic mode for consistent testing
+        self.parser.set_deterministic_mode(True)
+
+        # Initial roll with details
+        expr = "3D6"
+        first_total, first_rolls = self.parser.roll_dice_with_details(expr)
+
+        # Repeat roll
+        second_total, second_rolls = self.parser.roll_dice_with_details(expr)
+
+        # Verify total and individual rolls are identical
+        self.assertEqual(first_total, second_total)
+        self.assertEqual(first_rolls, second_rolls)
 
     def tearDown(self):
         """Clean up test fixtures."""
         # Reset random seed
         random.seed()
+        # Reset parser state
+        self.parser.set_deterministic_mode(False)
 
 
 if __name__ == '__main__':

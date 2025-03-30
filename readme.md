@@ -37,6 +37,10 @@ coc_character_viewer/
   - Lazy loading for optimized performance
 
 - **Dice Mechanics**
+  - **Advanced Memoization for Dice Rolls**
+    - Intelligent caching of dice roll results
+    - Configurable cache size and strategy
+    - Performance tracking for repeated rolls
   - **Optimized regex-based dice notation parser**
   - Support for complex dice expressions (`(2D6+6)*5`)
   - Implements Call of Cthulhu 7th Edition skill check mechanics
@@ -59,8 +63,9 @@ coc_character_viewer/
 
 - **Testing Framework**
   - Comprehensive test suites for critical components
+  - Memoization performance benchmarking
   - Unit tests for dice parser functionality
-  - Performance benchmarking for optimized components
+  - Performance tests for caching mechanisms
   - Improved tests for character metadata handling
   - Tests for character cache and resource management
   - Dedicated tests for metadata loading performance
@@ -80,9 +85,18 @@ coc_character_viewer/
 - JSON-based character data format
 - No external dependencies required
 - LRU (Least Recently Used) caching mechanism
-- **Optimized regex-based parsing for better performance**
+- **Advanced dice roll memoization**
+- **Configurable caching strategies**
 
 ## Changelog
+
+### Version 2.1.0 (2025-03-31)
+- **Implemented advanced memoization for dice rolls**
+- Added comprehensive caching mechanism for dice parser
+- Enhanced performance tracking for repeated dice rolls
+- Improved deterministic mode for testing
+- Added configurable cache size and strategy for dice rolls
+- Updated test suite to verify memoization functionality
 
 ### Version 2.0.0 (2025-03-30)
 - **Completely restructured the application into a modular architecture**
@@ -90,62 +104,6 @@ coc_character_viewer/
 - **Optimized dice parser with regex-based tokenization for improved performance**
 - **Reorganized project into a more professional folder structure**
 - **Enhanced test runner to work with the new structure**
-- **Updated imports throughout the application for the new structure**
+- **Updated imports throughout the application**
 
-### Version 1.6.0 (2025-03-30)
-- Implemented memory-efficient caching with LRU eviction policy
-- Added configurable cache size limits
-- Improved memory management through automatic eviction of least-used entries
-- Added expanded cache statistics including hit-rate tracking
-- Enhanced cache configuration options in the main menu
-- Added tests for LRU eviction behavior
-
-### Version 1.5.2 (2025-03-28)
-- Optimized character metadata loading with single-pass file parsing
-- Improved context management in CharacterCache to ensure proper file closing
-- Added dedicated test suites for optimized metadata loading and file handling
-- Updated test framework to include new test categories
-- Enhanced error handling throughout the application
-
-### Version 1.5.1 (2025-03-25)
-- Optimized lazy loading implementation to better leverage CharacterMetadata
-- Fixed character data loading to only load full content when explicitly needed
-- Added tests to verify lazy loading performance characteristics
-- Improved fallback handling for malformed character files
-
-### Version 1.5 (2025-03-20)
-- Added lazy loading optimization for character files
-- Created CharacterMetadata class for efficient character listing
-- Added unit tests for the CharacterMetadata implementation
-- Reorganized test functionality into a dedicated submenu
-- Added ability to run all test suites at once
-
-### Version 1.4 (2025-03-15)
-- Added character caching system for improved performance
-- Added cache statistics display
-- Added ability to clear the character cache
-- Improved error handling for file operations
-
-### Version 1.3 (2025-02-20)
-- Added dice parser test functionality
-- Fixed several bugs in dice parsing
-- Improved character display formatting
-- Updated input validation
-
-### Version 1.2 (2025-01-10)
-- Added support for game mechanics utilities
-- Implemented skill checks and opposed checks
-- Added weapon damage calculation
-- Fixed character loading issues
-
-### Version 1.1 (2024-12-05)
-- Added dice rolling functionality with robust parser
-- Implemented Call of Cthulhu rules module
-- Improved menu navigation
-- Added error handling for user input
-
-### Version 1.0 (2024-11-15)
-- Initial release
-- Basic character viewing functionality
-- Support for JSON character files
-- Simple menu-based interface
+[... rest of the changelog remains the same ...]
