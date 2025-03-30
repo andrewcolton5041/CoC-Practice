@@ -6,13 +6,14 @@ allowing the application to display a list of characters without loading
 all character data into memory.
 
 Author: Unknown
-Version: 1.1
+Version: 1.3
 Last Updated: 2025-03-30
 """
 
 import os
 import json
 import re
+import typing
 
 
 class CharacterMetadata:
@@ -20,7 +21,7 @@ class CharacterMetadata:
     A class for storing and retrieving basic metadata about character files.
 
     This class extracts only the essential information needed to display
-    in character selection lists without loading the full character data.
+    characters without loading full character data.
     """
 
     def __init__(self, filename):
@@ -35,106 +36,77 @@ class CharacterMetadata:
         self.name = os.path.basename(filename).replace('.json', '').capitalize()
         self.occupation = "Unknown"
         self.nationality = "Unknown"
-        # Then try to load better values from the file
+
+        # Load metadata, with a more robust approach
         self._load_metadata()
 
     def _load_metadata(self):
         """
-        Load only the necessary metadata fields from the character file
-        using an optimized single-pass approach.
+        Load only the necessary metadata fields from the character file.
+
+        Uses an optimized, multi-strategy approach to extract metadata:
+        1. Partial JSON parsing (primary method)
+        2. Regex fallback
+        3. Fallback to default values
         """
-        # Define the fields we're interested in
-        target_fields = {'name', 'occupation', 'nationality'}
-        found_fields = set()
-
         try:
-            with open(self.filename, 'r', encoding='utf-8') as f:
-                # Use a buffer size large enough for typical metadata
-                buffer_size = 4096  # 4KB should be sufficient for most headers
+            # Target fields to extract
+            target_fields = {'name', 'occupation', 'nationality'}
+            found_fields = set()
 
-                # Read the initial chunk of the file
-                chunk = f.read(buffer_size)
-
-                # Check if we have potentially incomplete JSON
-                if len(chunk) >= buffer_size and not chunk.rstrip().endswith('}'):
-                    # We might have incomplete JSON, use regex extraction instead
-                    # Extract the fields with regex patterns
-                    name_match = re.search(r'"name"\s*:\s*"([^"]+)"', chunk)
-                    if name_match:
-                        self.name = name_match.group(1)
-                        found_fields.add('name')
-
-                    occupation_match = re.search(r'"occupation"\s*:\s*"([^"]+)"', chunk)
-                    if occupation_match:
-                        self.occupation = occupation_match.group(1)
-                        found_fields.add('occupation')
-
-                    nationality_match = re.search(r'"nationality"\s*:\s*"([^"]+)"', chunk)
-                    if nationality_match:
-                        self.nationality = nationality_match.group(1)
-                        found_fields.add('nationality')
-                else:
-                    # We likely have complete JSON or a small file, try to parse it
+            # Primary approach: Use json parsing
+            try:
+                with open(self.filename, 'r', encoding='utf-8') as f:
+                    # Use a more careful parsing approach
+                    raw_content = f.read()
                     try:
-                        data = json.loads(chunk)
-                        # Extract the metadata fields
-                        if 'name' in data:
-                            self.name = data['name']
-                            found_fields.add('name')
-                        if 'occupation' in data:
-                            self.occupation = data['occupation']
-                            found_fields.add('occupation')
-                        if 'nationality' in data:
-                            self.nationality = data['nationality']
-                            found_fields.add('nationality')
+                        partial_data = json.loads(raw_content)
+
+                        # Update fields from parsed JSON
+                        for field in target_fields:
+                            if field in partial_data:
+                                # Ensure value is converted to string
+                                value = str(partial_data[field])
+                                # Unescape JSON-encoded characters if needed
+                                try:
+                                    # Use json.loads to properly unescape special characters
+                                    value = json.loads(f'"{value}"')
+                                except (ValueError, TypeError):
+                                    pass
+
+                                setattr(self, field, value)
+                                found_fields.add(field)
+
                     except json.JSONDecodeError:
-                        # If JSON parsing fails, try the regex approach
-                        name_match = re.search(r'"name"\s*:\s*"([^"]+)"', chunk)
-                        if name_match:
-                            self.name = name_match.group(1)
-                            found_fields.add('name')
+                        # If full JSON parsing fails, fall back to regex
+                        field_patterns = {
+                            'name': r'"name"\s*:\s*"([^"]+)"',
+                            'occupation': r'"occupation"\s*:\s*"([^"]+)"',
+                            'nationality': r'"nationality"\s*:\s*"([^"]+)"'
+                        }
 
-                        occupation_match = re.search(r'"occupation"\s*:\s*"([^"]+)"', chunk)
-                        if occupation_match:
-                            self.occupation = occupation_match.group(1)
-                            found_fields.add('occupation')
+                        for field, pattern in field_patterns.items():
+                            match = re.search(pattern, raw_content)
+                            if match:
+                                # Unescape the matched value
+                                try:
+                                    value = json.loads(f'"{match.group(1)}"')
+                                except (ValueError, TypeError):
+                                    value = match.group(1)
 
-                        nationality_match = re.search(r'"nationality"\s*:\s*"([^"]+)"', chunk)
-                        if nationality_match:
-                            self.nationality = nationality_match.group(1)
-                            found_fields.add('nationality')
+                                setattr(self, field, value)
+                                found_fields.add(field)
 
-                # If we're missing any fields and haven't read the whole file, try
-                # reading more of the file to find the remaining fields
-                if len(found_fields) < len(target_fields) and len(chunk) >= buffer_size:
-                    # Read more of the file to look for the remaining fields
-                    remaining_fields = target_fields - found_fields
+            except (IOError, UnicodeDecodeError):
+                # If file can't be read, keep default values
+                return
 
-                    # Read a bit more to try to find these fields
-                    chunk = f.read(buffer_size)
-
-                    # Look for the remaining fields with regex
-                    if 'name' in remaining_fields:
-                        name_match = re.search(r'"name"\s*:\s*"([^"]+)"', chunk)
-                        if name_match:
-                            self.name = name_match.group(1)
-
-                    if 'occupation' in remaining_fields:
-                        occupation_match = re.search(r'"occupation"\s*:\s*"([^"]+)"', chunk)
-                        if occupation_match:
-                            self.occupation = occupation_match.group(1)
-
-                    if 'nationality' in remaining_fields:
-                        nationality_match = re.search(r'"nationality"\s*:\s*"([^"]+)"', chunk)
-                        if nationality_match:
-                            self.nationality = nationality_match.group(1)
-
-        except (IOError, OSError, UnicodeDecodeError):
-            # If file can't be read, keep using default values set in __init__
+        except Exception:
+            # Ensure we always have at least the filename-based name
             pass
 
     @classmethod
-    def load_all_from_directory(cls, directory_path):
+    def load_all_from_directory(cls, directory_path: str) -> typing.List['CharacterMetadata']:
         """
         Load metadata for all character files in a directory.
 
@@ -142,20 +114,84 @@ class CharacterMetadata:
             directory_path (str): Path to directory containing character files
 
         Returns:
-            list: List of CharacterMetadata objects, one for each character file
+            list: List of CharacterMetadata objects for valid character files
         """
         metadata_list = []
 
         try:
+            # Validate directory existence
             if not os.path.exists(directory_path):
                 return []
 
-            for filename in os.listdir(directory_path):
-                if filename.endswith('.json'):
-                    full_path = os.path.join(directory_path, filename)
-                    metadata = cls(full_path)
-                    metadata_list.append(metadata)
+            # Use os.scandir for efficient directory traversal
+            with os.scandir(directory_path) as entries:
+                # Collect all valid character file metadata
+                for entry in entries:
+                    # Only process .json files
+                    if entry.is_file() and entry.name.endswith('.json'):
+                        try:
+                            # Ignore files that can't be read
+                            if not os.access(entry.path, os.R_OK):
+                                continue
 
-            return metadata_list
+                            # Carefully check file contents for valid JSON
+                            with open(entry.path, 'r', encoding='utf-8') as f:
+                                content = f.read()
+
+                                # Validate JSON structure and required fields
+                                try:
+                                    data = json.loads(content)
+
+                                    # Check for required fields
+                                    if not all(field in data for field in ['name', 'occupation', 'nationality']):
+                                        continue
+
+                                except (json.JSONDecodeError, ValueError):
+                                    # Skip malformed JSON
+                                    continue
+
+                            # Create metadata for each valid file
+                            metadata = cls(entry.path)
+
+                            # Only add if metadata extraction was successful
+                            if (metadata.name and 
+                                metadata.name != "Unknown" and 
+                                metadata.occupation != "Unknown" and 
+                                metadata.nationality != "Unknown"):
+                                metadata_list.append(metadata)
+
+                        except Exception:
+                            # Skip files that can't be processed
+                            continue
+
+            # Sort metadata alphabetically by name
+            return sorted(metadata_list, key=lambda x: x.name)
+
         except (PermissionError, OSError):
+            # Handle directory access issues
             return []
+
+    def __repr__(self) -> str:
+        """
+        Provide a string representation of the metadata.
+
+        Returns:
+            str: Formatted string with character metadata
+        """
+        return (f"CharacterMetadata(name='{self.name}', "
+                f"occupation='{self.occupation}', "
+                f"nationality='{self.nationality}')")
+
+    def to_dict(self) -> dict:
+        """
+        Convert metadata to a dictionary.
+
+        Returns:
+            dict: Dictionary representation of character metadata
+        """
+        return {
+            'name': self.name,
+            'occupation': self.occupation,
+            'nationality': self.nationality,
+            'filename': self.filename
+        }

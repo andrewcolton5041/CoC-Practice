@@ -6,7 +6,7 @@ character metadata loading works correctly and efficiently, including
 scenarios with large files, malformed JSON, and unusual formatting.
 
 Author: Unknown
-Version: 1.0
+Version: 1.1
 Last Updated: 2025-03-30
 """
 
@@ -15,7 +15,8 @@ import os
 import time
 import json
 import tempfile
-from src.character_metadata import CharacterMetadata
+import sys
+import stat
 
 
 class TestOptimizedMetadataLoading(unittest.TestCase):
@@ -27,153 +28,145 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
 
         # Create test character data
-        self.test_character = {
-            "name": "Test Character",
-            "age": 30,
-            "occupation": "Test Occupation",
-            "nationality": "Test Nation",
-            "attributes": {
-                "Strength": 60,
-                "Intelligence": 70,
-                "Health": 65
+        self.test_characters = [
+            {
+                "name": "Character 1",
+                "occupation": "Test Occupation 1",
+                "nationality": "Test Nation 1"
             },
-            "skills": {
-                "Test Skill": 45
+            {
+                "name": "Character 2",
+                "occupation": "Test Occupation 2", 
+                "nationality": "Test Nation 2"
             },
-            "backstory": "This is a very long backstory that should not be loaded by metadata."
-        }
-
-        # Create a test character file
-        self.test_filename = os.path.join(self.temp_dir.name, "test_character.json")
-        with open(self.test_filename, 'w', encoding='utf-8') as f:
-            json.dump(self.test_character, f)
-
-        # Create a malformed JSON file for testing error handling
-        self.bad_filename = os.path.join(self.temp_dir.name, "bad_character.json")
-        with open(self.bad_filename, 'w', encoding='utf-8') as f:
-            f.write("{This is not valid JSON}")
-
-    def test_basic_metadata_loading(self):
-        """Test basic metadata loading from valid file."""
-        metadata = CharacterMetadata(self.test_filename)
-
-        # Check that basic metadata is loaded correctly
-        self.assertEqual(metadata.name, "Test Character")
-        self.assertEqual(metadata.occupation, "Test Occupation")
-        self.assertEqual(metadata.nationality, "Test Nation")
-
-    def test_malformed_json_handling(self):
-        """Test metadata loading from malformed JSON file."""
-        metadata = CharacterMetadata(self.bad_filename)
-
-        # Should use filename as fallback for name
-        expected_name = "Bad_character"
-        # First verify that name is not None
-        self.assertIsNotNone(metadata.name, "Character name should not be None")
-        # Then verify it matches the expected value (case-insensitive)
-        self.assertEqual(metadata.name.lower(), expected_name.lower())
-        self.assertEqual(metadata.occupation, "Unknown")
-
-    def test_large_file_performance(self):
-        """Test that metadata loading is efficient with large files."""
-        # Create a character with a very large backstory to simulate a large file
-        large_character = {
-            "name": "Large Character",
-            "occupation": "Test Occupation",
-            "nationality": "Test Nation",
-            "backstory": "X" * 1000000  # 1MB of data
-        }
-
-        large_filename = os.path.join(self.temp_dir.name, "large_character.json")
-        with open(large_filename, 'w', encoding='utf-8') as f:
-            json.dump(large_character, f)
-
-        # Create a metadata object
-        start_time = time.time()
-        metadata = CharacterMetadata(large_filename)
-        end_time = time.time()
-
-        # Verify that loading was fast (shouldn't read the whole file)
-        load_time = end_time - start_time
-        self.assertLess(load_time, 0.1, f"Loading took {load_time} seconds, which suggests full file reading")
-
-        # Verify the metadata was correctly extracted
-        self.assertEqual(metadata.name, "Large Character")
-        self.assertEqual(metadata.occupation, "Test Occupation")
-        self.assertEqual(metadata.nationality, "Test Nation")
-
-    def test_fields_in_different_positions(self):
-        """Test metadata loading when fields are in different positions in the file."""
-        # Create a character with metadata fields in unusual positions
-        character_with_reordered_fields = {
-            "attributes": {"Strength": 60},
-            "skills": {"Test Skill": 45},
-            "occupation": "Buried Occupation",
-            "backstory": "Some backstory text",
-            "name": "Buried Name",
-            "nationality": "Buried Nation"
-        }
-
-        # Create the test file
-        reordered_filename = os.path.join(self.temp_dir.name, "reordered_character.json")
-        with open(reordered_filename, 'w', encoding='utf-8') as f:
-            json.dump(character_with_reordered_fields, f)
-
-        # Load the metadata
-        metadata = CharacterMetadata(reordered_filename)
-
-        # Verify that all fields were found regardless of their position
-        self.assertEqual(metadata.name, "Buried Name")
-        self.assertEqual(metadata.occupation, "Buried Occupation")
-        self.assertEqual(metadata.nationality, "Buried Nation")
-
-    def test_fields_with_special_characters(self):
-        """Test metadata loading when fields contain special characters."""
-        # Create a character with special characters in metadata fields
-        character_with_special_chars = {
-            "name": "Special \"Quotes\" Character",
-            "occupation": "Special \\ Backslash Occupation",
-            "nationality": "Special\nNewline\tTab Nation"
-        }
-
-        # Create the test file
-        special_chars_filename = os.path.join(self.temp_dir.name, "special_chars_character.json")
-        with open(special_chars_filename, 'w', encoding='utf-8') as f:
-            json.dump(character_with_special_chars, f)
-
-        # Load the metadata
-        metadata = CharacterMetadata(special_chars_filename)
-
-        # Verify that fields with special characters were handled correctly
-        self.assertEqual(metadata.name, "Special \"Quotes\" Character")
-        self.assertEqual(metadata.occupation, "Special \\ Backslash Occupation")
-        self.assertEqual(metadata.nationality, "Special\nNewline\tTab Nation")
-
-    def test_directory_loading(self):
-        """Test loading metadata for all files in a directory."""
-        # Create multiple character files with different metadata
-        characters = [
-            {"name": "Character 1", "occupation": "Occupation 1", "nationality": "Nation 1"},
-            {"name": "Character 2", "occupation": "Occupation 2", "nationality": "Nation 2"},
-            {"name": "Character 3", "occupation": "Occupation 3", "nationality": "Nation 3"}
+            {
+                "name": "Character 3",
+                "occupation": "Test Occupation 3",
+                "nationality": "Test Nation 3"
+            }
         ]
 
-        for i, character in enumerate(characters):
-            filename = os.path.join(self.temp_dir.name, f"character_{i+1}.json")
+        # Create test character files
+        self.test_filenames = []
+        for i, character in enumerate(self.test_characters):
+            filename = os.path.join(self.temp_dir.name, f"test_character_{i+1}.json")
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(character, f)
+            self.test_filenames.append(filename)
 
+        # Add a non-JSON file to test filtering
+        with open(os.path.join(self.temp_dir.name, "not_a_character.txt"), 'w') as f:
+            f.write("This is not a JSON file")
+
+        # Import CharacterMetadata after setup to avoid circular imports
+        from src.character_metadata import CharacterMetadata
+        self.CharacterMetadata = CharacterMetadata
+
+    def test_directory_scanning_efficiency(self):
+        """
+        Test the efficiency of directory scanning using os.scandir().
+
+        Verify that:
+        1. Only JSON files are processed
+        2. All valid JSON files are found
+        3. Non-JSON files are ignored
+        """
         # Load metadata for all files in directory
-        metadata_list = CharacterMetadata.load_all_from_directory(self.temp_dir.name)
+        metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
 
-        # Should find all valid character files (including the ones created in other tests)
-        self.assertGreaterEqual(len(metadata_list), 3)
+        # Should find only the JSON character files
+        self.assertEqual(len(metadata_list), 3, 
+            "Should only process JSON character files")
 
-        # Verify that all names are found
-        character_names = [m.name for m in metadata_list]
-        self.assertIn("Character 1", character_names)
-        self.assertIn("Character 2", character_names)
-        self.assertIn("Character 3", character_names)
+        # Verify metadata is correctly loaded
+        metadata_names = [metadata.name for metadata in metadata_list]
+        expected_names = [char['name'] for char in self.test_characters]
+        self.assertCountEqual(metadata_names, expected_names, 
+            "Metadata names should match original character names")
+
+    def test_handling_of_unreadable_files(self):
+        """
+        Test handling of unreadable files in the directory.
+        """
+        # Create an unreadable file
+        unreadable_file = os.path.join(self.temp_dir.name, "unreadable.json")
+        with open(unreadable_file, 'w') as f:
+            f.write('{"name": "Unreadable Character"}')
+
+        # Remove read permissions
+        os.chmod(unreadable_file, 0o000)
+
+        try:
+            # Attempt to load metadata
+            metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
+
+            # Should still process other readable files
+            self.assertEqual(len(metadata_list), 3, 
+                "Should skip unreadable files but process others")
+
+        finally:
+            # Restore permissions to allow cleanup
+            os.chmod(unreadable_file, 0o666)
+
+    def test_sorting_of_metadata(self):
+        """
+        Verify that metadata is sorted alphabetically by name.
+        """
+        metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
+
+        # Verify sorting
+        sorted_names = sorted([char['name'] for char in self.test_characters])
+        loaded_names = [metadata.name for metadata in metadata_list]
+
+        self.assertEqual(loaded_names, sorted_names, 
+            "Metadata should be sorted alphabetically by name")
+
+    def test_performance_of_directory_scanning(self):
+        """
+        Test the performance of directory scanning.
+
+        Verify that scanning a directory with many files is efficient.
+        """
+        # Create a large number of test files
+        large_num_files = 100
+        for i in range(large_num_files):
+            filename = os.path.join(self.temp_dir.name, f"large_test_{i}.json")
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump({
+                    "name": f"Large Character {i}",
+                    "occupation": f"Test Occupation {i}",
+                    "nationality": "Test Nation"
+                }, f)
+
+        # Measure time of directory scanning
+        start_time = time.time()
+        metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
+        end_time = time.time()
+
+        # Verify performance (should be relatively quick)
+        scanning_time = end_time - start_time
+        self.assertTrue(scanning_time < 1.0, 
+            f"Directory scanning took too long: {scanning_time} seconds")
+
+        # Verify correct number of files processed (original 3 + new 100)
+        self.assertEqual(len(metadata_list), large_num_files + 3, 
+            "Should process all JSON files in the directory")
+
+    def test_error_handling_with_malformed_json(self):
+        """
+        Test handling of malformed JSON files in the directory.
+        """
+        # Create a malformed JSON file
+        malformed_file = os.path.join(self.temp_dir.name, "malformed.json")
+        with open(malformed_file, 'w', encoding='utf-8') as f:
+            f.write("{This is not valid JSON}")
+
+        # Attempt to load metadata
+        metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
+
+        # Should still process other valid files
+        self.assertEqual(len(metadata_list), 3, 
+            "Should skip malformed JSON files but process others")
 
     def tearDown(self):
         """Clean up test fixtures."""

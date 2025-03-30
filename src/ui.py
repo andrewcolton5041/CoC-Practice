@@ -8,7 +8,7 @@ This module handles all the user interface functionality including:
 - UI formatting and display
 
 Author: Unknown
-Version: 1.0
+Version: 1.1
 Last Updated: 2025-03-30
 """
 
@@ -59,28 +59,45 @@ def list_character_metadata():
     """
     List all character metadata from JSON files in the characters directory.
 
-    This is an optimized version that only loads minimal character information
-    necessary for displaying the character selection list.
+    This is an optimized version using os.scandir() for efficient directory traversal.
 
     Returns:
         list: List of CharacterMetadata objects, or empty list if directory not found
             or no character files exist
     """
     try:
+        # Check if characters directory exists
         if not os.path.exists('characters'):
             print("Error: Characters directory not found!")
             return []
 
-        # Load metadata for all character files
-        metadata_list = CharacterMetadata.load_all_from_directory('characters')
+        # Use os.scandir() for efficient directory iteration
+        metadata_list = []
+        try:
+            with os.scandir('characters') as entries:
+                for entry in entries:
+                    # Check if it's a file and has .json extension
+                    if entry.is_file() and entry.name.endswith('.json'):
+                        try:
+                            # Create metadata object for the file
+                            metadata = CharacterMetadata(entry.path)
+                            metadata_list.append(metadata)
+                        except Exception as e:
+                            # Log any individual file processing errors without stopping entire process
+                            print(f"Error processing {entry.name}: {e}")
 
-        if not metadata_list:
-            print("No character files found in the characters directory!")
+            # Sort metadata alphabetically by name for consistent display
+            metadata_list.sort(key=lambda x: x.name)
 
-        return metadata_list
-    except PermissionError:
-        print("Error: No permission to access the characters directory.")
-        return []
+            if not metadata_list:
+                print("No valid character files found in the characters directory!")
+
+            return metadata_list
+
+        except PermissionError:
+            print("Error: No permission to access files in the characters directory.")
+            return []
+
     except Exception as e:
         print(f"Error listing character files: {e}")
         return []
