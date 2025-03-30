@@ -19,7 +19,7 @@ import time
 import gc
 import sys
 import weakref
-from character_cache import CharacterCache
+from src.character_cache import CharacterCache
 
 
 class TestCharacterCache(unittest.TestCase):

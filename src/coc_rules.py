@@ -15,7 +15,8 @@ Version: 1.1
 Last Updated: 2025-03-30
 """
 
-import dice_roll as dr
+from src.dice_roll import roll_dice as dr
+
 
 def improvement_check(stat):
     """

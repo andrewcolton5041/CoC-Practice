@@ -14,7 +14,7 @@ Version: 2.0
 Last Updated: 2025-03-30
 """
 
-from dice_parser import DiceParser
+from src.dice_parser import DiceParser
 
 # Create a singleton instance of the DiceParser
 _parser = DiceParser()

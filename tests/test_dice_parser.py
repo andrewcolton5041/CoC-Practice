@@ -1,18 +1,25 @@
 """
-Test module for the dice parser implementation.
+Test module for the optimized dice parser implementation.
 
 This module contains tests for the dice parser functionality,
 verifying that it correctly handles various dice notation formats
-and edge cases.
+and edge cases using the new regex-based tokenization approach.
 
 Author: Unknown
-Version: 1.0
+Version: 2.0
 Last Updated: 2025-03-30
 """
 
 import unittest
 import random
-from dice_parser import DiceParser
+import time
+import sys
+import os
+
+# Add the src directory to the path so we can import the modules
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.dice_parser import DiceParser
+
 
 class TestDiceParser(unittest.TestCase):
     """Test suite for the DiceParser class."""
@@ -67,6 +74,9 @@ class TestDiceParser(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.parser.tokenize("3D6X")  # Invalid character
+
+        with self.assertRaises(ValueError):
+            self.parser.tokenize("")  # Empty string
 
     def test_parse_simple(self):
         """Test parsing of simple dice expressions."""
@@ -138,10 +148,67 @@ class TestDiceParser(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.parser.roll_dice_with_details("3D6+5")  # Not a simple dice roll
 
+    def test_performance(self):
+        """Test the performance of the new tokenization implementation."""
+        # Generate a complex dice expression
+        complex_expr = "+".join([f"{i}D{20-i}" for i in range(1, 10)])
+
+        # Time how long it takes to tokenize and parse
+        start_time = time.time()
+        for _ in range(1000):
+            tokens = self.parser.tokenize(complex_expr)
+        tokenize_time = time.time() - start_time
+
+        # This is just to verify it runs and doesn't need to be compared
+        # to the old implementation in the test itself
+        self.assertLess(tokenize_time, 5.0)  # Should be much faster than 5 seconds
+
+        # Log the time for manual verification if needed
+        print(f"\nTokenization performance for 1000 iterations: {tokenize_time:.4f} seconds")
+
+    def test_case_insensitivity(self):
+        """Test that the parser handles different case variations."""
+        tokens_upper = self.parser.tokenize("3D6")
+        tokens_lower = self.parser.tokenize("3d6")
+        tokens_mixed = self.parser.tokenize("3D6")
+
+        self.assertEqual(tokens_upper, tokens_lower)
+        self.assertEqual(tokens_upper, tokens_mixed)
+
+    def test_parentheses_matching(self):
+        """Test proper handling of nested parentheses."""
+        # Simple parentheses
+        tokens = self.parser.tokenize("(3D6)")
+        self.assertEqual(tokens, [
+            ('LPAREN', '('), 
+            ('DICE', (3, 6)), 
+            ('RPAREN', ')')
+        ])
+
+        # Nested parentheses
+        tokens = self.parser.tokenize("((1D20+5)*2)")
+        self.assertEqual(tokens, [
+            ('LPAREN', '('), 
+            ('LPAREN', '('), 
+            ('DICE', (1, 20)), 
+            ('OPERATOR', '+'), 
+            ('NUMBER', 5), 
+            ('RPAREN', ')'), 
+            ('OPERATOR', '*'), 
+            ('NUMBER', 2), 
+            ('RPAREN', ')')
+        ])
+
+        # Mismatched parentheses should raise an error when parsing
+        tokens = self.parser.tokenize("(3D6")
+        with self.assertRaises(ValueError):
+            self.parser.parse(tokens)
+
     def tearDown(self):
         """Clean up test fixtures."""
         # Reset random seed
         random.seed()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -15,7 +15,7 @@ import os
 import time
 import json
 import tempfile
-from character_metadata import CharacterMetadata
+from src.character_metadata import CharacterMetadata
 
 
 class TestOptimizedMetadataLoading(unittest.TestCase):

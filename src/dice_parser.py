@@ -2,28 +2,29 @@
 Dice Parser Module for Call of Cthulhu RPG
 
 This module provides a robust parser for dice notation expressions commonly used 
-in tabletop RPGs like Call of Cthulhu. It uses a token-based approach rather than 
-complex regular expressions, making it more maintainable and extensible.
+in tabletop RPGs like Call of Cthulhu. It uses efficient regex-based tokenization
+instead of character-by-character processing for better performance.
 
 The module can handle various dice formats including:
 - Basic rolls:         "3D6" or "1D20+3" or "4D4-1" 
 - Parenthetical rolls: "(2D6+6)*5" or "(3D4-2)*2"
 
 Author: Unknown
-Version: 1.0
+Version: 2.0
 Last Updated: 2025-03-30
 """
 
 import random
 import operator
+import re
 
 
 class DiceParser:
     """
     A class for parsing and evaluating dice notation expressions.
 
-    This parser uses a token-based approach to handle dice expressions, breaking them
-    down into components and evaluating them according to standard RPG rules.
+    This parser uses regex-based tokenization to efficiently handle dice expressions,
+    breaking them down into components and evaluating them according to standard RPG rules.
     """
 
     def __init__(self):
@@ -38,7 +39,7 @@ class DiceParser:
 
     def tokenize(self, dice_string):
         """
-        Convert a dice string into tokens for processing.
+        Convert a dice string into tokens for processing using regex matching.
 
         Args:
             dice_string (str): A string in standard dice notation
@@ -49,73 +50,57 @@ class DiceParser:
         Raises:
             ValueError: If the dice string contains invalid tokens
         """
-        # Remove all whitespace
+        # Remove all whitespace and convert to uppercase
         dice_string = dice_string.replace(' ', '').upper()
 
-        # Initialize an empty list of tokens and current token
+        if not dice_string:
+            raise ValueError("Empty dice expression")
+
+        # Initialize tokens list
         tokens = []
-        current = ''
 
-        # Process each character
-        i = 0
-        while i < len(dice_string):
-            char = dice_string[i]
+        # Define regex patterns for different token types
+        dice_pattern = r'(\d+)D(\d+)'  # For dice notation like 3D6
+        number_pattern = r'(\d+)'      # For standalone numbers
+        operator_pattern = r'([+\-*/])' # For operators
+        lparen_pattern = r'(\()'       # For left parenthesis
+        rparen_pattern = r'(\))'       # For right parenthesis
 
-            # Check for dice notation (e.g., "3D6")
-            if char == 'D' and current.isdigit():
-                dice_count = int(current)
-                current = 'D'
-                i += 1
+        # Combined pattern for tokenization
+        pattern = f"{dice_pattern}|{number_pattern}|{operator_pattern}|{lparen_pattern}|{rparen_pattern}"
 
-                # Get the number of sides
-                sides = ''
-                while i < len(dice_string) and dice_string[i].isdigit():
-                    sides += dice_string[i]
-                    i += 1
+        # Process the string using regex
+        position = 0
 
-                if not sides:
-                    raise ValueError("Invalid dice notation: missing sides value after 'D'")
+        for match in re.finditer(pattern, dice_string):
+            # Check if there's a gap between matches (invalid character)
+            if match.start() > position:
+                invalid_char = dice_string[position]
+                raise ValueError(f"Invalid character in dice string: '{invalid_char}'")
 
-                # Add the dice roll token
-                tokens.append(('DICE', (dice_count, int(sides))))
-                current = ''
-                continue
+            # Extract the match groups
+            groups = match.groups()
 
-            # Handle operators
-            if char in self.operators or char in '()':
-                # Add any accumulated digits as a number token
-                if current:
-                    if current.isdigit():
-                        tokens.append(('NUMBER', int(current)))
-                    else:
-                        raise ValueError(f"Invalid token: {current}")
-                    current = ''
+            # Determine token type based on which group matched
+            if groups[0] is not None:  # Dice notation (e.g., "3D6")
+                count = int(groups[0])
+                sides = int(groups[1])
+                tokens.append(('DICE', (count, sides)))
+            elif groups[2] is not None:  # Standalone number
+                tokens.append(('NUMBER', int(groups[2])))
+            elif groups[3] is not None:  # Operator
+                tokens.append(('OPERATOR', groups[3]))
+            elif groups[4] is not None:  # Left parenthesis
+                tokens.append(('LPAREN', '('))
+            elif groups[5] is not None:  # Right parenthesis
+                tokens.append(('RPAREN', ')'))
 
-                # Add the operator or parenthesis token
-                if char in self.operators:
-                    tokens.append(('OPERATOR', char))
-                elif char == '(':
-                    tokens.append(('LPAREN', char))
-                elif char == ')':
-                    tokens.append(('RPAREN', char))
-                i += 1
-                continue
+            position = match.end()
 
-            # Accumulate digits for numbers
-            if char.isdigit():
-                current += char
-                i += 1
-                continue
-
-            # Invalid character
-            raise ValueError(f"Invalid character in dice string: {char}")
-
-        # Add any remaining token
-        if current:
-            if current.isdigit():
-                tokens.append(('NUMBER', int(current)))
-            else:
-                raise ValueError(f"Invalid token: {current}")
+        # Check if we've processed the entire string
+        if position < len(dice_string):
+            invalid_char = dice_string[position]
+            raise ValueError(f"Invalid character in dice string: '{invalid_char}'")
 
         return tokens
 
@@ -235,13 +220,13 @@ class DiceParser:
         # Simplify the dice string
         dice_string = dice_string.replace(' ', '').upper()
 
-        # Check for simple dice roll format (e.g., "3D6")
-        parts = dice_string.split('D')
-        if len(parts) != 2 or not parts[0].isdigit() or not parts[1].isdigit():
+        # Check for simple dice roll format using regex
+        match = re.match(r'^(\d+)D(\d+)$', dice_string)
+        if not match:
             raise ValueError("For detailed rolls, use simple dice notation (e.g., '3D6')")
 
-        count = int(parts[0])
-        sides = int(parts[1])
+        count = int(match.group(1))
+        sides = int(match.group(2))
 
         # Roll the dice and track individual results
         rolls = [random.randint(1, sides) for _ in range(count)]

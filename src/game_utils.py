@@ -16,8 +16,8 @@ Version: 1.2
 Last Updated: 2025-03-30
 """
 
-import dice_roll as dr
-import coc_rules as rules
+from src.dice_roll import roll_dice as dr
+from src.coc_rules import rules
 
 def skill_check(character_data, skill_name):
     """
