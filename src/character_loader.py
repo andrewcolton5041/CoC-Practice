@@ -13,7 +13,7 @@ Last Updated: 2025-03-30
 import os
 import json
 from src.character_cache_core import CharacterCache
-from constants import (
+from src.constants import (
     REQUIRED_FIELDS,
     DEFAULT_DIRECTORY,
     JSON_EXTENSION,

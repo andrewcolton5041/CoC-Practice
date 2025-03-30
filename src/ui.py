@@ -19,7 +19,30 @@ from src.character_metadata import CharacterMetadata
 from src.character_cache_core import CharacterCache
 from src.character_cache_stats import get_cache_stats, clear_cache
 from src.character_display import display_character
-import constants
+from src.constants import (
+    PROMPT_CACHE_SIZE,
+    CACHE_SIZE_CANCEL,
+    CACHE_SIZE_MAX,
+    PROMPT_PRESS_ENTER,
+    MENU_OPTION_MIN,
+    MAIN_MENU_OPTION_MAX,
+    TEST_MENU_OPTION_MAX,
+    STAT_SIZE,
+    STAT_MAX_SIZE,
+    STAT_HITS,
+    STAT_MISSES,
+    STAT_HIT_RATE,
+    STAT_ACTIVE_ENTRIES,
+    STAT_FILES,
+    STAT_MEMORY_USAGE,
+    STAT_OLDEST_AGE,
+    STAT_NEWEST_AGE,
+    CHARACTERS_DIRECTORY,
+    DEFAULT_UI_CACHE_SIZE,
+    CACHE_SIZE_MIN,
+    JSON_EXTENSION,
+    DEFAULT_ENCODING
+)
 
 
 def get_user_selection(prompt, min_value, max_value):
@@ -66,15 +89,14 @@ def list_character_metadata():
         list: List of CharacterMetadata objects
     """
     try:
-        if not os.path.exists(constants.CHARACTERS_DIRECTORY):
+        if not os.path.exists(CHARACTERS_DIRECTORY):
             print("Error: Characters directory not found!")
             return []
 
         metadata_list = []
-        with os.scandir(constants.CHARACTERS_DIRECTORY) as entries:
+        with os.scandir(CHARACTERS_DIRECTORY) as entries:
             for entry in entries:
-                if entry.is_file() and entry.name.endswith(
-                        constants.JSON_EXTENSION):
+                if entry.is_file() and entry.name.endswith(JSON_EXTENSION):
                     try:
                         metadata = CharacterMetadata(entry.path)
                         metadata_list.append(metadata)
@@ -109,23 +131,23 @@ def configure_cache_settings(cache):
     """
     print("\n=== Cache Configuration ===")
     stats = get_cache_stats(cache)
-    print(f"Current maximum cache size: {stats[constants.STAT_MAX_SIZE]}")
+    print(f"Current maximum cache size: {stats[STAT_MAX_SIZE]}")
 
     try:
-        new_size = get_user_selection(constants.PROMPT_CACHE_SIZE,
-                                      constants.CACHE_SIZE_CANCEL,
-                                      constants.CACHE_SIZE_MAX)
+        new_size = get_user_selection(PROMPT_CACHE_SIZE,
+                                      CACHE_SIZE_CANCEL,
+                                      CACHE_SIZE_MAX)
 
-        if new_size in (None, constants.CACHE_SIZE_CANCEL):
+        if new_size in (None, CACHE_SIZE_CANCEL):
             print("Cache configuration canceled.")
             return
 
         new_cache = CharacterCache(max_size=new_size)
 
-        for filename in stats[constants.STAT_FILES][-new_size:]:
+        for filename in stats[STAT_FILES][-new_size:]:
             try:
                 with open(filename, 'r',
-                          encoding=constants.DEFAULT_ENCODING) as f:
+                          encoding=DEFAULT_ENCODING) as f:
                     character_data = json.load(f)
                 new_cache.put(filename, character_data)
             except Exception as e:
@@ -148,32 +170,31 @@ def display_cache_stats(cache):
     """
     stats = get_cache_stats(cache)
     print("\n--- Cache Status ---")
-    print(f"Characters in cache metadata: {stats[constants.STAT_SIZE]}")
-    print(f"Active entries in cache: {stats[constants.STAT_ACTIVE_ENTRIES]}")
-    print(f"Maximum cache size: {stats[constants.STAT_MAX_SIZE]}")
+    print(f"Characters in cache metadata: {stats[STAT_SIZE]}")
+    print(f"Active entries in cache: {stats[STAT_ACTIVE_ENTRIES]}")
+    print(f"Maximum cache size: {stats[STAT_MAX_SIZE]}")
     print(
-        f"Approximate memory usage: {stats[constants.STAT_MEMORY_USAGE]} bytes"
+        f"Approximate memory usage: {stats[STAT_MEMORY_USAGE]} bytes"
     )
 
-    total_accesses = stats.get(constants.STAT_HITS, 0) + stats.get(
-        constants.STAT_MISSES, 0)
+    total_accesses = stats.get(STAT_HITS, 0) + stats.get(STAT_MISSES, 0)
     if total_accesses > 0:
         print(
-            f"Cache hit rate: {stats.get(constants.STAT_HIT_RATE, 0):.1f}% "
-            f"({stats.get(constants.STAT_HITS, 0)} hits, {stats.get(constants.STAT_MISSES, 0)} misses)"
+            f"Cache hit rate: {stats.get(STAT_HIT_RATE, 0):.1f}% "
+            f"({stats.get(STAT_HITS, 0)} hits, {stats.get(STAT_MISSES, 0)} misses)"
         )
 
-    if stats[constants.STAT_SIZE] > 0:
+    if stats[STAT_SIZE] > 0:
         print("\nCached characters:")
-        for i, char_file in enumerate(stats[constants.STAT_FILES], 1):
+        for i, char_file in enumerate(stats[STAT_FILES], 1):
             print(f"{i}. {char_file}")
 
-        if constants.STAT_OLDEST_AGE in stats:
+        if STAT_OLDEST_AGE in stats:
             print(
-                f"\nOldest entry age: {stats[constants.STAT_OLDEST_AGE]:.1f} seconds"
+                f"\nOldest entry age: {stats[STAT_OLDEST_AGE]:.1f} seconds"
             )
             print(
-                f"Newest entry age: {stats[constants.STAT_NEWEST_AGE]:.1f} seconds"
+                f"Newest entry age: {stats[STAT_NEWEST_AGE]:.1f} seconds"
             )
     else:
         print("\nNo characters in cache.")
@@ -194,8 +215,8 @@ def run_tests_menu(run_dice_parser_tests, run_character_metadata_tests,
         print("6. Back to Main Menu")
 
         choice = get_user_selection(
-            f"\nEnter your choice ({constants.MENU_OPTION_MIN}-{constants.TEST_MENU_OPTION_MAX}): ",
-            constants.MENU_OPTION_MIN, constants.TEST_MENU_OPTION_MAX)
+            f"\nEnter your choice ({MENU_OPTION_MIN}-{TEST_MENU_OPTION_MAX}): ",
+            MENU_OPTION_MIN, TEST_MENU_OPTION_MAX)
 
         if choice is None:
             continue
@@ -227,7 +248,7 @@ def run_tests_menu(run_dice_parser_tests, run_character_metadata_tests,
             return
 
         try:
-            input(f"\n{constants.PROMPT_PRESS_ENTER}")
+            input(f"\n{PROMPT_PRESS_ENTER}")
         except (KeyboardInterrupt, EOFError):
             pass
 
@@ -270,7 +291,7 @@ def handle_character_view(cache, load_character_from_json):
     if character_data:
         display_character(character_data)
         try:
-            input(f"\n{constants.PROMPT_PRESS_ENTER}")
+            input(f"\n{PROMPT_PRESS_ENTER}")
         except (KeyboardInterrupt, EOFError):
             pass
 
@@ -279,7 +300,7 @@ def main_menu(load_character_from_json, run_dice_parser_tests, run_character_met
     """
     Main menu function handling user interaction.
     """
-    cache = CharacterCache(max_size=constants.DEFAULT_UI_CACHE_SIZE)
+    cache = CharacterCache(max_size=DEFAULT_UI_CACHE_SIZE)
 
     try:
         while True:
@@ -292,9 +313,9 @@ def main_menu(load_character_from_json, run_dice_parser_tests, run_character_met
             print("6. Exit")
 
             choice = get_user_selection(
-                f"\nEnter your choice ({constants.MENU_OPTION_MIN}-{constants.MAIN_MENU_OPTION_MAX}): ",
-                constants.MENU_OPTION_MIN,
-                constants.MAIN_MENU_OPTION_MAX
+                f"\nEnter your choice ({MENU_OPTION_MIN}-{MAIN_MENU_OPTION_MAX}): ",
+                MENU_OPTION_MIN,
+                MAIN_MENU_OPTION_MAX
             )
 
             if choice is None:

@@ -8,7 +8,7 @@ import os
 import json
 import re
 import typing
-from constants import (
+from src.constants import (
     DEFAULT_OCCUPATION,
     DEFAULT_NATIONALITY,
     DEFAULT_ENCODING,

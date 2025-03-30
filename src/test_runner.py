@@ -13,7 +13,11 @@ import os
 import unittest
 import sys
 import importlib
-import constants
+from src.constants import (
+    TESTS_DIRECTORY,
+    TEST_MODULES,
+    TEST_PATTERN
+)
 
 
 def run_test_suite(module_key, test_description):
@@ -27,8 +31,8 @@ def run_test_suite(module_key, test_description):
     Returns:
         bool: True if all tests passed, False otherwise
     """
-    test_module_name = constants.TEST_MODULES[module_key]
-    test_module_path = os.path.join(constants.TESTS_DIRECTORY, f"{test_module_name}.py")
+    test_module_name = TEST_MODULES[module_key]
+    test_module_path = os.path.join(TESTS_DIRECTORY, f"{test_module_name}.py")
 
     print(f"\n=== Running {test_description} ===\n")
 
@@ -37,7 +41,7 @@ def run_test_suite(module_key, test_description):
             print(f"Error: {test_module_path} not found!")
             return False
 
-        tests_path = os.path.abspath(constants.TESTS_DIRECTORY)
+        tests_path = os.path.abspath(TESTS_DIRECTORY)
         if tests_path not in sys.path:
             sys.path.insert(0, tests_path)
 
@@ -123,12 +127,12 @@ def discover_and_run_tests():
     print("\n=== Discovering and Running All Tests ===\n")
 
     try:
-        if not os.path.exists(constants.TESTS_DIRECTORY):
-            print(f"Error: '{constants.TESTS_DIRECTORY}' directory not found!")
+        if not os.path.exists(TESTS_DIRECTORY):
+            print(f"Error: '{TESTS_DIRECTORY}' directory not found!")
             return False
 
         loader = unittest.TestLoader()
-        test_suite = loader.discover(constants.TESTS_DIRECTORY, pattern=constants.TEST_PATTERN)
+        test_suite = loader.discover(TESTS_DIRECTORY, pattern=TEST_PATTERN)
         runner = unittest.TextTestRunner(verbosity=2)
         result = runner.run(test_suite)
 

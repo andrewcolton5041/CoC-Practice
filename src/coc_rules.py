@@ -18,7 +18,7 @@ Last Updated: 2025-03-30
 # Imports
 from src.dice_roll import roll_dice  # Use the one you actually need
 from src.dice_parser_exceptions import DiceParserError, TokenizationError, ValidationError
-from constants import (
+from src.constants import (
     EXTREME_SUCCESS_DIVISOR,
     HARD_SUCCESS_DIVISOR,
     FUMBLE_THRESHOLD_MIN,

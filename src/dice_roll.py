@@ -23,7 +23,15 @@ from collections import OrderedDict
 from src.dice_parser_core import DiceParserCore
 from src.dice_parser_utils import DiceParserUtils
 from src.dice_parser_exceptions import DiceParserError, TokenizationError, ValidationError
-import constants
+from src.constants import (
+    DEFAULT_DICE_CACHE_SIZE,
+    PERCENTAGE_MULTIPLIER,
+    STAT_SIZE,
+    STAT_MAX_SIZE,
+    STAT_HITS,
+    STAT_MISSES,
+    STAT_HIT_RATE
+)
 
 
 class DiceRollCache:
@@ -37,7 +45,7 @@ class DiceRollCache:
     - Flexible cache management
     """
 
-    def __init__(self, max_size=constants.DEFAULT_DICE_CACHE_SIZE):
+    def __init__(self, max_size=DEFAULT_DICE_CACHE_SIZE):
         """
         Initialize the dice roll cache.
 
@@ -127,15 +135,15 @@ class DiceRollCache:
         """
         # Calculate hit rate
         total_lookups = self._stats['total_lookups']
-        hit_rate = (self._stats['hits'] / total_lookups * constants.PERCENTAGE_MULTIPLIER) if total_lookups > 0 else 0
+        hit_rate = (self._stats['hits'] / total_lookups * PERCENTAGE_MULTIPLIER) if total_lookups > 0 else 0
 
         return {
-            constants.STAT_SIZE: len(self._cache),
-            constants.STAT_MAX_SIZE: self._max_size,
-            constants.STAT_HITS: self._stats['hits'],
-            constants.STAT_MISSES: self._stats['misses'],
+            STAT_SIZE: len(self._cache),
+            STAT_MAX_SIZE: self._max_size,
+            STAT_HITS: self._stats['hits'],
+            STAT_MISSES: self._stats['misses'],
             'evictions': self._stats['evictions'],
-            constants.STAT_HIT_RATE: hit_rate,
+            STAT_HIT_RATE: hit_rate,
             'total_lookups': total_lookups,
             'uptime': time.time() - self._stats['creation_time'],
             'last_access_time': self._stats['last_access_time']
@@ -191,4 +199,16 @@ def roll_dice(dice_string, use_cache=True, deterministic=False, seed=None):
     except (TokenizationError, ValidationError) as e:
         raise DiceParserError(f"Error parsing dice: {e}")
 
-# Remaining functions remain unchanged as no other magic numbers were identified.
+# Define the _parse_and_roll_tokens function that was missing
+def _parse_and_roll_tokens(tokens, deterministic=False):
+    """
+    Parse tokens and roll dice based on them.
+
+    Args:
+        tokens: Tokenized dice notation
+        deterministic: Whether to use deterministic mode
+
+    Returns:
+        int: Result of dice roll
+    """
+    return _parser_core.parse(tokens, deterministic=deterministic)
