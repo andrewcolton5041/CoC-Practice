@@ -1,23 +1,9 @@
 from dice_roll import roll_dice
-
 """
 Investigator Attribute Generation
 
-This module defines functions to roll the initial attribute values for an investigator
-according to standard Call of Cthulhu rules.
-
-Each function returns an integer between 15 and 90, depending on the dice formula.
-
-Usage:
-    chargen_str()  -> Strength
-    chargen_con()  -> Constitution
-    chargen_siz()  -> Size
-    chargen_dex()  -> Dexterity
-    chargen_app()  -> Appearance
-    chargen_int()  -> Intelligence
-    chargen_pow()  -> Power
-    chargen_edu()  -> Education
-    chargen_luck() -> Luck
+This module defines a dictionary of functions to roll initial attribute values
+for an investigator according to Call of Cthulhu rules.
 """
 
 # Mapping of attributes to their dice roll formulas
@@ -33,6 +19,8 @@ _attribute_formulas = {
     "luck": "3D6 * 5",
 }
 
-# Dynamically generate functions for each attribute
-for attr, formula in _attribute_formulas.items():
-    globals()[f"chargen_{attr}"] = lambda f=formula: roll_dice(f)
+# Create a dictionary of attribute generator functions
+chargen_funcs = {
+    key: (lambda f=formula: roll_dice(f))
+    for key, formula in _attribute_formulas.items()
+}

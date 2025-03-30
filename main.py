@@ -1,4 +1,8 @@
-import characterSheet
-drew = characterSheet.Character("Drew", "18")
+import characterSheet as cs
 
-drew.print()
+name = input("What is your characters name?  ")
+age = int(input("What is your characters age?  "))
+
+c = cs.Character(name, age)
+
+print(c)
