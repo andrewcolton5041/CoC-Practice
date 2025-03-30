@@ -6,12 +6,13 @@ allowing the application to display a list of characters without loading
 all character data into memory.
 
 Author: Unknown
-Version: 1.0
+Version: 1.1
 Last Updated: 2025-03-30
 """
 
 import os
 import json
+import re
 
 
 class CharacterMetadata:
@@ -39,40 +40,96 @@ class CharacterMetadata:
 
     def _load_metadata(self):
         """
-        Load only the necessary metadata fields from the character file.
+        Load only the necessary metadata fields from the character file
+        using an optimized single-pass approach.
         """
-        try:
-            # Only read the first 1024 bytes to extract basic info
-            with open(self.filename, 'r', encoding='utf-8') as f:
-                file_header = f.read(1024)
+        # Define the fields we're interested in
+        target_fields = {'name', 'occupation', 'nationality'}
+        found_fields = set()
 
-            # Try to parse the header as JSON - check if it might be truncated
-            try:
-                header_data = json.loads(file_header)
-                # The JSON might be incomplete if the file is large
-                # Make sure we're getting a complete "name" field
-                if 'name' in header_data:
-                    self.name = header_data['name']
-                if 'occupation' in header_data:
-                    self.occupation = header_data['occupation']
-                if 'nationality' in header_data:
-                    self.nationality = header_data['nationality']
-            except json.JSONDecodeError:
-                # Try reading a bit more of the file
-                with open(self.filename, 'r', encoding='utf-8') as f:
-                    file_header = f.read(4096)  # Read more data
+        try:
+            with open(self.filename, 'r', encoding='utf-8') as f:
+                # Use a buffer size large enough for typical metadata
+                buffer_size = 4096  # 4KB should be sufficient for most headers
+
+                # Read the initial chunk of the file
+                chunk = f.read(buffer_size)
+
+                # Check if we have potentially incomplete JSON
+                if len(chunk) >= buffer_size and not chunk.rstrip().endswith('}'):
+                    # We might have incomplete JSON, use regex extraction instead
+                    # Extract the fields with regex patterns
+                    name_match = re.search(r'"name"\s*:\s*"([^"]+)"', chunk)
+                    if name_match:
+                        self.name = name_match.group(1)
+                        found_fields.add('name')
+
+                    occupation_match = re.search(r'"occupation"\s*:\s*"([^"]+)"', chunk)
+                    if occupation_match:
+                        self.occupation = occupation_match.group(1)
+                        found_fields.add('occupation')
+
+                    nationality_match = re.search(r'"nationality"\s*:\s*"([^"]+)"', chunk)
+                    if nationality_match:
+                        self.nationality = nationality_match.group(1)
+                        found_fields.add('nationality')
+                else:
+                    # We likely have complete JSON or a small file, try to parse it
                     try:
-                        header_data = json.loads(file_header)
-                        if 'name' in header_data:
-                            self.name = header_data['name']
-                        if 'occupation' in header_data:
-                            self.occupation = header_data['occupation']
-                        if 'nationality' in header_data:
-                            self.nationality = header_data['nationality']
+                        data = json.loads(chunk)
+                        # Extract the metadata fields
+                        if 'name' in data:
+                            self.name = data['name']
+                            found_fields.add('name')
+                        if 'occupation' in data:
+                            self.occupation = data['occupation']
+                            found_fields.add('occupation')
+                        if 'nationality' in data:
+                            self.nationality = data['nationality']
+                            found_fields.add('nationality')
                     except json.JSONDecodeError:
-                        # Keep using default values set in __init__
-                        pass
-        except (IOError, OSError):
+                        # If JSON parsing fails, try the regex approach
+                        name_match = re.search(r'"name"\s*:\s*"([^"]+)"', chunk)
+                        if name_match:
+                            self.name = name_match.group(1)
+                            found_fields.add('name')
+
+                        occupation_match = re.search(r'"occupation"\s*:\s*"([^"]+)"', chunk)
+                        if occupation_match:
+                            self.occupation = occupation_match.group(1)
+                            found_fields.add('occupation')
+
+                        nationality_match = re.search(r'"nationality"\s*:\s*"([^"]+)"', chunk)
+                        if nationality_match:
+                            self.nationality = nationality_match.group(1)
+                            found_fields.add('nationality')
+
+                # If we're missing any fields and haven't read the whole file, try
+                # reading more of the file to find the remaining fields
+                if len(found_fields) < len(target_fields) and len(chunk) >= buffer_size:
+                    # Read more of the file to look for the remaining fields
+                    remaining_fields = target_fields - found_fields
+
+                    # Read a bit more to try to find these fields
+                    chunk = f.read(buffer_size)
+
+                    # Look for the remaining fields with regex
+                    if 'name' in remaining_fields:
+                        name_match = re.search(r'"name"\s*:\s*"([^"]+)"', chunk)
+                        if name_match:
+                            self.name = name_match.group(1)
+
+                    if 'occupation' in remaining_fields:
+                        occupation_match = re.search(r'"occupation"\s*:\s*"([^"]+)"', chunk)
+                        if occupation_match:
+                            self.occupation = occupation_match.group(1)
+
+                    if 'nationality' in remaining_fields:
+                        nationality_match = re.search(r'"nationality"\s*:\s*"([^"]+)"', chunk)
+                        if nationality_match:
+                            self.nationality = nationality_match.group(1)
+
+        except (IOError, OSError, UnicodeDecodeError):
             # If file can't be read, keep using default values set in __init__
             pass
 

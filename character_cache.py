@@ -10,7 +10,7 @@ The main class is CharacterCache, which handles:
 - Providing statistics about cache usage and memory consumption
 
 Author: Unknown
-Version: 1.0
+Version: 1.1
 Last Updated: 2025-03-30
 """
 
@@ -47,7 +47,7 @@ class CharacterCache:
         if filename not in self._cache:
             return None
 
-        # Check if the cached version is still current
+        # Check if the cached version is still current using context manager
         try:
             current_mod_time = os.path.getmtime(filename)
             if current_mod_time != self._cache[filename]["mod_time"]:
@@ -170,6 +170,7 @@ class CharacterCache:
 
         # Not in cache or stale, load from file
         try:
+            # Use context manager to ensure file is properly closed after operations
             with open(filename, 'r', encoding='utf-8') as f:
                 character_data = json.load(f)
 

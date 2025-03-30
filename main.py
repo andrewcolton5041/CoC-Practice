@@ -12,7 +12,7 @@ This application can be used by game masters and players to quickly access
 character information for the Call of Cthulhu roleplaying game.
 
 Author: Unknown
-Version: 1.5
+Version: 1.5.1
 Last Updated: 2025-03-30
 """
 
@@ -148,7 +148,7 @@ def display_character(character_data):
 def list_character_metadata():
     """
     List all character metadata from JSON files in the characters directory.
-    
+
     This is an optimized version that only loads minimal character information
     necessary for displaying the character selection list.
 
@@ -163,10 +163,10 @@ def list_character_metadata():
 
         # Load metadata for all character files
         metadata_list = CharacterMetadata.load_all_from_directory('characters')
-        
+
         if not metadata_list:
             print("No character files found in the characters directory!")
-            
+
         return metadata_list
     except PermissionError:
         print("Error: No permission to access the characters directory.")
@@ -240,7 +240,7 @@ def display_cache_stats(cache):
 def run_tests_menu():
     """
     Display and handle the submenu for running various tests.
-    
+
     Returns:
         None
     """
@@ -249,16 +249,18 @@ def run_tests_menu():
         print("\n=== Run Tests ===")
         print("1. Run Dice Parser Tests")
         print("2. Run Character Metadata Tests")
-        print("3. Run All Tests")
-        print("4. Back to Main Menu")
-        
+        print("3. Run Character Cache Tests")
+        print("4. Run Metadata Loading Tests")
+        print("5. Run All Tests")
+        print("6. Back to Main Menu")
+
         # Get user choice
-        choice = get_user_selection("\nEnter your choice (1-4): ", 1, 4)
-        
+        choice = get_user_selection("\nEnter your choice (1-6): ", 1, 6)
+
         # Handle canceled selection
         if choice is None:
             continue
-            
+
         if choice == 1:
             # Run dice parser tests
             run_dice_parser_tests()
@@ -266,14 +268,22 @@ def run_tests_menu():
             # Run character metadata tests
             run_character_metadata_tests()
         elif choice == 3:
+            # Run character cache tests
+            run_character_cache_tests()
+        elif choice == 4:
+            # Run optimized metadata loading tests
+            run_metadata_loading_tests()
+        elif choice == 5:
             # Run all tests
             print("\n=== Running All Tests ===\n")
             run_dice_parser_tests()
             run_character_metadata_tests()
-        elif choice == 4:
+            run_character_cache_tests()
+            run_metadata_loading_tests()
+        elif choice == 6:
             # Return to main menu
             return
-            
+
         # Wait for user to press Enter before continuing
         try:
             input("\nPress Enter to continue...")
@@ -389,6 +399,114 @@ def run_character_metadata_tests():
         print("\n" + "=" * 50)
 
 
+def run_character_cache_tests():
+    """
+    Run the character cache test suite.
+
+    This function loads and executes the tests defined in test_character_cache.py.
+    It uses the unittest framework to discover and run the tests.
+
+    Returns:
+        bool: True if all tests passed, False otherwise
+    """
+    print("\n=== Running Character Cache Tests ===\n")
+
+    try:
+        # Check if the test file exists
+        if not os.path.exists('test_character_cache.py'):
+            print("Error: test_character_cache.py not found!")
+            return False
+
+        # Import the test module
+        try:
+            import test_character_cache
+        except ImportError:
+            print("Error: Failed to import test_character_cache module.")
+            return False
+
+        # Create a test loader
+        loader = unittest.TestLoader()
+
+        # Load tests from the test module
+        test_suite = loader.loadTestsFromModule(test_character_cache)
+
+        # Create a test runner
+        runner = unittest.TextTestRunner(verbosity=2)
+
+        # Run the tests
+        result = runner.run(test_suite)
+
+        # Print a summary
+        print("\n=== Test Summary ===")
+        print(f"Ran {result.testsRun} tests")
+        print(f"Failures: {len(result.failures)}")
+        print(f"Errors: {len(result.errors)}")
+        print(f"Skipped: {len(result.skipped)}")
+
+        # Return True if all tests passed
+        return len(result.failures) == 0 and len(result.errors) == 0
+
+    except Exception as e:
+        print(f"Error running character cache tests: {e}")
+        return False
+    finally:
+        print("\n" + "=" * 50)
+
+
+def run_metadata_loading_tests():
+    """
+    Run the optimized metadata loading test suite.
+
+    This function loads and executes the tests defined in test_metadata_loading.py.
+    It uses the unittest framework to discover and run the tests.
+
+    Returns:
+        bool: True if all tests passed, False otherwise
+    """
+    print("\n=== Running Optimized Metadata Loading Tests ===\n")
+
+    try:
+        # Check if the test file exists
+        if not os.path.exists('test_metadata_loading.py'):
+            print("Error: test_metadata_loading.py not found!")
+            return False
+
+        # Import the test module
+        try:
+            import test_metadata_loading
+        except ImportError:
+            print("Error: Failed to import test_metadata_loading module.")
+            return False
+
+        # Create a test loader
+        loader = unittest.TestLoader()
+
+        # Load tests from the test module
+        test_suite = loader.loadTestsFromModule(test_metadata_loading)
+
+        # Create a test runner
+        runner = unittest.TextTestRunner(verbosity=2)
+
+        # Run the tests
+        result = runner.run(test_suite)
+
+        # Print a summary
+        print("\n=== Test Summary ===")
+        print(f"Ran {result.testsRun} tests")
+        print(f"Failures: {len(result.failures)}")
+        print(f"Errors: {len(result.errors)}")
+        print(f"Skipped: {len(result.skipped)}")
+
+        # Return True if all tests passed
+        return len(result.failures) == 0 and len(result.errors) == 0
+
+    except Exception as e:
+        print(f"Error running optimized metadata loading tests: {e}")
+        return False
+    finally:
+        print("\n" + "=" * 50)
+
+
 def main():
     """
     Main menu function that handles user interaction with the application.
@@ -410,7 +528,7 @@ def main():
             print("1. View Premade Characters")
             print("2. Clear Character Cache")
             print("3. View Cache Status")
-            print("4. Run Tests")  # Updated option for test submenu
+            print("4. Run Tests")
             print("5. Exit")
 
             # Get user choice

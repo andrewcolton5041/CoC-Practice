@@ -21,15 +21,18 @@ A character management application for the Call of Cthulhu roleplaying game syst
   - Success level determination (Extreme, Hard, Regular, Failure, Fumble)
 
 - **Performance Optimizations**
+  - **Optimized metadata loading with single-pass parsing**
+  - **Proper context management for file operations**
   - Character data caching system
-  - **Enhanced lazy loading implementation that only reads full character data when needed**
+  - Enhanced lazy loading implementation
   - Memory usage statistics and management
 
 - **Testing Framework**
   - Comprehensive test suites for critical components
   - Unit tests for dice parser functionality
-  - Unit tests for character metadata handling
-  - **Tests to verify correct lazy loading behavior**
+  - **Improved tests for character metadata handling**
+  - **New tests for character cache and resource management**
+  - **Dedicated tests for metadata loading performance**
 
 ## Usage
 
@@ -47,13 +50,20 @@ A character management application for the Call of Cthulhu roleplaying game syst
 
 ## Changelog
 
-### Version 1.5.1 (2025-03-30)
+### Version 1.5.2 (2025-03-30)
+- Optimized character metadata loading with single-pass file parsing
+- Improved context management in CharacterCache to ensure proper file closing
+- Added dedicated test suites for optimized metadata loading and file handling
+- Updated test framework to include new test categories
+- Enhanced error handling throughout the application
+
+### Version 1.5.1 (2025-03-28)
 - Optimized lazy loading implementation to better leverage CharacterMetadata
 - Fixed character data loading to only load full content when explicitly needed
 - Added tests to verify lazy loading performance characteristics
 - Improved fallback handling for malformed character files
 
-### Version 1.5 (2025-03-28)
+### Version 1.5 (2025-03-25)
 - Added lazy loading optimization for character files
 - Created CharacterMetadata class for efficient character listing
 - Added unit tests for the CharacterMetadata implementation
