@@ -9,6 +9,7 @@ JSON_EXTENSION = '.json'
 DEFAULT_DIRECTORY = 'characters'
 DEFAULT_ENCODING = 'utf-8'
 JSON_INDENT = 2
+MAX_PARTIAL_READ_BYTES = 4096  # Maximum bytes to read for partial file reading
 
 # === Metadata Defaults ===
 DEFAULT_OCCUPATION = "Unknown"
@@ -42,6 +43,12 @@ STAT_HITS = 'hits'
 STAT_MISSES = 'misses'
 STAT_OLDEST_AGE = 'oldest_entry_age'
 STAT_NEWEST_AGE = 'newest_entry_age'
+
+# === Error Handling ===
+LOG_FILE_NAME = "coc_viewer.log"  # Name of the log file
+
+# === Memory Calculation ===
+MEMORY_CALCULATION_METHOD = "string_representation"  # Method used to estimate memory usage
 
 # === Utility ===
 PERCENTAGE_MULTIPLIER = 100
