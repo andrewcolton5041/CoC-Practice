@@ -1,5 +1,3 @@
-# Shared Constants for Call of Cthulhu Character Viewer
-
 # === Character Data Validation ===
 REQUIRED_FIELDS = ['name', 'attributes']
 REQUIRED_METADATA_FIELDS = ['name', 'occupation', 'nationality']
@@ -53,6 +51,20 @@ MEMORY_CALCULATION_METHOD = "string_representation"  # Method used to estimate m
 # === Utility ===
 PERCENTAGE_MULTIPLIER = 100
 DEFAULT_CACHE_SIZE = 15
+
+# === Cache Decorator Constants ===
+DEFAULT_LRU_CACHE_SIZE = 128
+DEFAULT_CHARACTER_CACHE_SIZE = 20
+DEFAULT_METADATA_CACHE_SIZE = 50
+DEFAULT_FILE_CACHE_SIZE = 30
+DEFAULT_SKILL_CACHE_SIZE = 200
+DEFAULT_DICE_LRU_CACHE_SIZE = 128
+CACHE_STATS_ENABLED = True
+CACHE_STATS_DETAILED = False
+CACHE_KEY_MAX_LENGTH = 1024
+FUNCTION_CACHE_CHECK_INTERVAL = 60  # Seconds between cleanup checks
+FUNCTION_CACHE_REFRESH_INTERVAL = 300  # Seconds before auto refresh
+FUNCTION_CACHE_DEFAULT_TIMEOUT = 3600  # Default cache entry timeout in seconds
 
 # === Testing Constants ===
 TEST_CACHE_SIZE = 3  # Small cache size for testing
