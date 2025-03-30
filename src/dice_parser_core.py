@@ -8,14 +8,21 @@ The module focuses on efficiently breaking down dice expressions into tokens
 that can be evaluated according to standard RPG rules.
 
 Author: Unknown
-Version: 3.1
+Version: 4.0
 Last Updated: 2025-03-30
 """
 
 import random
 import operator
 import re
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
+
+from src.dice_parser_exceptions import (
+    TokenizationError, 
+    ValidationError, 
+    LimitExceededError, 
+    RollError
+)
 
 
 class DiceParserCore:
@@ -25,6 +32,11 @@ class DiceParserCore:
     This parser uses regex-based tokenization to efficiently handle dice expressions,
     breaking them down into components for further evaluation.
     """
+
+    # Configuration constants for parsing limits
+    MAX_DICE_STRING_LENGTH = 1000  # Maximum allowed length of dice string
+    MAX_DICE_COUNT = 100  # Maximum number of dice in a single roll
+    MAX_DICE_SIDES = 1000  # Maximum number of sides on a die
 
     def __init__(self):
         """Initialize the dice parser with operator maps."""
@@ -38,7 +50,7 @@ class DiceParserCore:
         # For tracking deterministic values
         self._next_deterministic_value = 0
 
-    def tokenize(self, dice_string):
+    def tokenize(self, dice_string: str) -> List[Tuple[str, Union[int, str]]]:
         """
         Convert a dice string into tokens for processing using regex matching.
 
@@ -49,11 +61,19 @@ class DiceParserCore:
             list: A list of tokens representing the dice expression
 
         Raises:
-            ValueError: If the dice string contains invalid tokens
+            LimitExceededError: If dice string exceeds maximum length
+            TokenizationError: For invalid tokens or characters
         """
-        # Validate input to fail fast with better error messages
+        # Validate input length
         if not dice_string:
-            raise ValueError("Empty dice expression")
+            raise TokenizationError("Empty dice expression")
+
+        if len(dice_string) > self.MAX_DICE_STRING_LENGTH:
+            raise LimitExceededError(
+                f"Dice notation exceeds maximum length of {self.MAX_DICE_STRING_LENGTH}",
+                dice_string,
+                max_length=self.MAX_DICE_STRING_LENGTH
+            )
 
         # Remove all whitespace and convert to uppercase
         dice_string = dice_string.replace(' ', '').upper()
@@ -74,59 +94,78 @@ class DiceParserCore:
         # Process the string using regex
         position = 0
 
-        for match in re.finditer(pattern, dice_string):
-            # Check if there's a gap between matches (invalid character)
-            if match.start() > position:
-                invalid_char = dice_string[position]
-                raise ValueError(f"Invalid character in dice string: '{invalid_char}'")
+        try:
+            for match in re.finditer(pattern, dice_string):
+                # Check if there's a gap between matches (invalid character)
+                if match.start() > position:
+                    invalid_char = dice_string[position:match.start()]
+                    raise TokenizationError(
+                        f"Invalid character(s) in dice string",
+                        dice_string,
+                        position=position,
+                        problematic_token=invalid_char
+                    )
 
-            # Extract the match groups
-            groups = match.groups()
+                # Extract the match groups
+                groups = match.groups()
 
-            # Determine token type based on which group matched
-            if groups[0] is not None:  # Dice notation (e.g., "3D6")
-                count = int(groups[0])
-                sides = int(groups[1])
+                # Determine token type based on which group matched
+                if groups[0] is not None:  # Dice notation (e.g., "3D6")
+                    count = int(groups[0])
+                    sides = int(groups[1])
 
-                # Validation for dice parameters
-                if count <= 0:
-                    raise ValueError(f"Dice count must be positive: {count}D{sides}")
-                if sides <= 0:
-                    raise ValueError(f"Dice sides must be positive: {count}D{sides}")
+                    # Validation for dice parameters
+                    if count <= 0 or count > self.MAX_DICE_COUNT:
+                        raise RollError(
+                            f"Dice count must be between 1 and {self.MAX_DICE_COUNT}",
+                            dice_string,
+                            sides=sides,
+                            count=count,
+                            error_type='invalid_dice_count'
+                        )
 
-                tokens.append(('DICE', (count, sides)))
-            elif groups[2] is not None:  # Standalone number
-                tokens.append(('NUMBER', int(groups[2])))
-            elif groups[3] is not None:  # Operator
-                tokens.append(('OPERATOR', groups[3]))
-            elif groups[4] is not None:  # Left parenthesis
-                tokens.append(('LPAREN', '('))
-            elif groups[5] is not None:  # Right parenthesis
-                tokens.append(('RPAREN', ')'))
+                    if sides <= 0 or sides > self.MAX_DICE_SIDES:
+                        raise RollError(
+                            f"Dice sides must be between 1 and {self.MAX_DICE_SIDES}",
+                            dice_string,
+                            sides=sides,
+                            count=count,
+                            error_type='invalid_dice_sides'
+                        )
 
-            position = match.end()
+                    tokens.append(('DICE', (count, sides)))
+                elif groups[2] is not None:  # Standalone number
+                    tokens.append(('NUMBER', int(groups[2])))
+                elif groups[3] is not None:  # Operator
+                    tokens.append(('OPERATOR', groups[3]))
+                elif groups[4] is not None:  # Left parenthesis
+                    tokens.append(('LPAREN', '('))
+                elif groups[5] is not None:  # Right parenthesis
+                    tokens.append(('RPAREN', ')'))
 
-        # Check if we've processed the entire string
-        if position < len(dice_string):
-            invalid_char = dice_string[position]
-            raise ValueError(f"Invalid character in dice string: '{invalid_char}'")
+                position = match.end()
 
-        # Validate balanced parentheses
-        paren_count = 0
-        for token_type, _ in tokens:
-            if token_type == 'LPAREN':
-                paren_count += 1
-            elif token_type == 'RPAREN':
-                paren_count -= 1
-                if paren_count < 0:
-                    raise ValueError("Unbalanced parentheses: too many closing parentheses")
+            # Check if we've processed the entire string
+            if position < len(dice_string):
+                raise TokenizationError(
+                    "Unexpected characters at end of dice notation",
+                    dice_string,
+                    position=position,
+                    problematic_token=dice_string[position:]
+                )
 
-        if paren_count > 0:
-            raise ValueError("Unbalanced parentheses: missing closing parentheses")
+            return tokens
 
-        return tokens
+        except Exception as e:
+            # Wrap any unexpected errors with more context
+            if isinstance(e, (TokenizationError, RollError, LimitExceededError)):
+                raise
+            raise TokenizationError(
+                f"Unexpected error during tokenization: {str(e)}",
+                dice_string
+            ) from e
 
-    def validate_tokens(self, tokens):
+    def validate_tokens(self, tokens: List[Tuple[str, Union[int, str]]]) -> None:
         """
         Validate a sequence of tokens to ensure they form a valid dice expression.
 
@@ -134,11 +173,22 @@ class DiceParserCore:
             tokens (list): List of tokens to validate
 
         Raises:
-            ValueError: If the token sequence is invalid
+            ValidationError: If the token sequence is invalid
         """
         # Check for empty token list
         if not tokens:
-            raise ValueError("Empty dice expression")
+            raise ValidationError(
+                "Empty dice expression", 
+                error_type='missing_tokens'
+            )
+
+        # Special case: Immediately reject if tokens are only parentheses
+        if all(token_type in ['LPAREN', 'RPAREN'] for token_type, _ in tokens):
+            raise ValidationError(
+                "Empty or unbalanced parentheses",
+                tokens=tokens,
+                error_type='empty_parentheses'
+            )
 
         # Track state during validation
         expect_value = True
@@ -150,14 +200,27 @@ class DiceParserCore:
             if token_type == 'LPAREN':
                 paren_level += 1
                 if not expect_value:
-                    raise ValueError(f"Unexpected opening parenthesis at position {i}")
+                    raise ValidationError(
+                        f"Unexpected opening parenthesis at position {i}",
+                        tokens=tokens,
+                        error_type='unbalanced_parentheses'
+                    )
+                expect_value = True
                 continue
             elif token_type == 'RPAREN':
                 paren_level -= 1
                 if paren_level < 0:
-                    raise ValueError("Unbalanced parentheses: too many closing parentheses")
+                    raise ValidationError(
+                        "Unbalanced parentheses: too many closing parentheses",
+                        tokens=tokens,
+                        error_type='unbalanced_parentheses'
+                    )
                 if last_token_type == 'LPAREN':
-                    raise ValueError("Empty parentheses are not allowed")
+                    raise ValidationError(
+                        "Empty parentheses are not allowed",
+                        tokens=tokens,
+                        error_type='empty_parentheses'
+                    )
                 expect_value = False
                 continue
 
@@ -165,24 +228,40 @@ class DiceParserCore:
             if expect_value:
                 # We expect a value (NUMBER, DICE, or LPAREN)
                 if token_type not in ['NUMBER', 'DICE']:
-                    raise ValueError(f"Expected a value at position {i}, got {token_type}")
+                    raise ValidationError(
+                        f"Expected a value at position {i}, got {token_type}",
+                        tokens=tokens,
+                        error_type='missing_operand'
+                    )
                 expect_value = False
             else:
                 # We expect an operator
                 if token_type != 'OPERATOR':
-                    raise ValueError(f"Expected an operator at position {i}, got {token_type}")
+                    raise ValidationError(
+                        f"Expected an operator at position {i}, got {token_type}",
+                        tokens=tokens,
+                        error_type='invalid_operator_placement'
+                    )
                 expect_value = True
 
             last_token_type = token_type
 
         # Final checks
         if paren_level > 0:
-            raise ValueError("Unbalanced parentheses: missing closing parentheses")
+            raise ValidationError(
+                "Unbalanced parentheses: missing closing parentheses",
+                tokens=tokens,
+                error_type='unbalanced_parentheses'
+            )
 
         if expect_value:
-            raise ValueError("Incomplete dice expression")
+            raise ValidationError(
+                "Incomplete dice expression",
+                tokens=tokens,
+                error_type='missing_operand'
+            )
 
-    def parse(self, tokens, deterministic=False):
+    def parse(self, tokens: List[Tuple[str, Union[int, str]]], deterministic: bool = False) -> int:
         """
         Parse and evaluate a sequence of tokens.
 
@@ -234,7 +313,10 @@ class DiceParserCore:
                         j += 1
 
                     if paren_level > 0:
-                        raise ValueError("Mismatched parentheses")
+                        raise ValidationError(
+                            "Mismatched parentheses", 
+                            error_type='unbalanced_parentheses'
+                        )
 
                     # Evaluate sub-expression
                     sub_expr = token_seq[i+1:j-1]
@@ -246,10 +328,16 @@ class DiceParserCore:
 
             # Validate expression
             if not values:
-                raise ValueError("No values in expression")
+                raise ValidationError(
+                    "No values in expression", 
+                    error_type='missing_operand'
+                )
 
             if len(values) != len(operators_seq) + 1:
-                raise ValueError("Mismatched number of values and operators")
+                raise ValidationError(
+                    "Mismatched number of values and operators",
+                    error_type='invalid_token_sequence'
+                )
 
             # Calculate result
             result = values[0]

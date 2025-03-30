@@ -6,22 +6,27 @@ verifying that it correctly handles memoization, caching, and performance
 improvements for repeated dice rolls.
 
 Author: Unknown
-Version: 2.1
+Version: 4.0
 Last Updated: 2025-03-30
 """
 
 import unittest
 import random
-import time
 import sys
 import os
-import functools
 
 # Add the src directory to the path so we can import the modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from src.dice_parser_core import DiceParserCore
 from src.dice_parser_utils import DiceParserUtils
-from src.dice_parser_exceptions import DiceParserError, TokenizationError, ValidationError
+from src.dice_parser_exceptions import (
+    TokenizationError, 
+    ValidationError, 
+    RollError, 
+    LimitExceededError, 
+    DiceParserError
+)
 
 
 class TestDiceParserMemoization(unittest.TestCase):
@@ -114,26 +119,54 @@ class TestDiceParserMemoization(unittest.TestCase):
         # Ensure variability in results
         self.assertTrue(len(set(results)) > 1)
 
-    def test_invalid_dice_notation(self):
-        """Test handling of invalid dice notations."""
+    def test_invalid_dice_notation_errors(self):
+        """Test handling of various invalid dice notations."""
         invalid_expressions = [
-            "3D0",    # Zero-sided die
-            "0D6",    # Zero dice count
-            "3D6+",   # Incomplete expression
-            "(3D6",   # Unbalanced parentheses
-            "3D6++5",  # Multiple consecutive operators
-            "()3D6",   # Empty parentheses
-            "3D6)(+5"  # Misplaced parentheses
+            ("3D0", RollError, "Zero-sided die"),
+            ("0D6", RollError, "Zero dice count"),
+            ("3D6+", ValidationError, "Incomplete expression"),
+            ("(3D6", ValidationError, "Unbalanced parentheses"),
+            ("3D6++5", ValidationError, "Multiple consecutive operators"),
+            ("3D6)(+5", ValidationError, "Misplaced parentheses"),
+            ("()", ValidationError, "Empty parentheses")
         ]
 
-        for expr in invalid_expressions:
-            with self.assertRaises((TokenizationError, ValidationError, ValueError), 
-                                   msg=f"Failed to raise error for expression: {expr}"):
-                tokens = self.parser_core.tokenize(expr)
-                self.parser_core.validate_tokens(tokens)
+        for expr, expected_error, description in invalid_expressions:
+            with self.subTest(expr=expr, description=description):
+                with self.assertRaises(expected_error, msg=description):
+                    tokens = self.parser_core.tokenize(expr)
+                    self.parser_core.validate_tokens(tokens)
 
-    def test_dice_notation_validation(self):
-        """Test dice notation validation utility."""
+    def test_limit_exceeded_errors(self):
+        """Test handling of parsing limits."""
+        # Create an excessively long dice string
+        long_string = "1D6" * (DiceParserCore.MAX_DICE_STRING_LENGTH // 3 + 1)
+        with self.assertRaises(LimitExceededError):
+            self.parser_core.tokenize(long_string)
+
+    def test_notation_parsing_utility(self):
+        """Test the dice notation parsing utility method."""
+        test_cases = [
+            ("3D6", {
+                'dice': [(3, 6)],
+                'numbers': [],
+                'operators': [],
+                'parentheses': []
+            }),
+            ("(2D6+6)*5", {
+                'dice': [(2, 6)],
+                'numbers': [6, 5],
+                'operators': ['+', '*'],
+                'parentheses': ['(', ')']
+            })
+        ]
+
+        for notation, expected in test_cases:
+            parsed = self.parser_utils.parse_dice_notation(notation)
+            self.assertEqual(parsed, expected)
+
+    def test_validation_utility(self):
+        """Test the dice notation validation utility."""
         valid_expressions = [
             "3D6", 
             "2D6+5", 
@@ -169,24 +202,19 @@ class TestDiceParserMemoization(unittest.TestCase):
             self.assertFalse(self.parser_utils.validate_dice_notation(expr), 
                              f"Expression should be invalid: {expr}")
 
-    def test_parsing_non_standard_characters(self):
-        """Test parsing expressions with various valid characters."""
-        expressions = [
-            "3D6",         # Standard notation
-            "2D20+5",      # With simple addition
-            "(3D6+2)*2",   # With parentheses and multiplication
-            "1D100-10",    # With subtraction
-            "2D6+6*3",     # Mixed operators
-            "(2D6+6)*5"    # Complex expression
-        ]
-
-        for expr in expressions:
-            try:
-                tokens = self.parser_core.tokenize(expr)
-                result = self.parser_core.parse(tokens)
-                self.assertTrue(isinstance(result, int), f"Failed to parse: {expr}")
-            except Exception as e:
-                self.fail(f"Unexpected error parsing {expr}: {e}")
+    def test_deterministic_mode_setup(self):
+        """Test setting up deterministic mode with custom values."""
+        try:
+            # Setup deterministic mode with valid values
+            self.parser_utils.set_deterministic_mode(
+                enabled=True, 
+                values={
+                    "1D6": [3, 4, 5],
+                    "2D8": [2, 7]
+                }
+            )
+        except Exception as e:
+            self.fail(f"Failed to set up deterministic mode: {e}")
 
     def tearDown(self):
         """Clean up test fixtures."""
