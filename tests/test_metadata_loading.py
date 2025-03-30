@@ -17,6 +17,11 @@ import json
 import tempfile
 import sys
 import stat
+from src.constants import (
+    TEST_SCANNING_TIME_THRESHOLD,
+    TEST_LARGE_FILE_COUNT,
+    TEST_BASE_FILE_COUNT
+)
 
 
 class TestOptimizedMetadataLoading(unittest.TestCase):
@@ -75,7 +80,7 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
         metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
 
         # Should find only the JSON character files
-        self.assertEqual(len(metadata_list), 3, 
+        self.assertEqual(len(metadata_list), TEST_BASE_FILE_COUNT, 
             "Should only process JSON character files")
 
         # Verify metadata is correctly loaded
@@ -101,7 +106,7 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
             metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
 
             # Should still process other readable files
-            self.assertEqual(len(metadata_list), 3, 
+            self.assertEqual(len(metadata_list), TEST_BASE_FILE_COUNT, 
                 "Should skip unreadable files but process others")
 
         finally:
@@ -128,8 +133,7 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
         Verify that scanning a directory with many files is efficient.
         """
         # Create a large number of test files
-        large_num_files = 100
-        for i in range(large_num_files):
+        for i in range(TEST_LARGE_FILE_COUNT):
             filename = os.path.join(self.temp_dir.name, f"large_test_{i}.json")
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump({
@@ -145,11 +149,11 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
 
         # Verify performance (should be relatively quick)
         scanning_time = end_time - start_time
-        self.assertTrue(scanning_time < 1.0, 
+        self.assertTrue(scanning_time < TEST_SCANNING_TIME_THRESHOLD, 
             f"Directory scanning took too long: {scanning_time} seconds")
 
         # Verify correct number of files processed (original 3 + new 100)
-        self.assertEqual(len(metadata_list), large_num_files + 3, 
+        self.assertEqual(len(metadata_list), TEST_LARGE_FILE_COUNT + TEST_BASE_FILE_COUNT, 
             "Should process all JSON files in the directory")
 
     def test_error_handling_with_malformed_json(self):
@@ -165,7 +169,7 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
         metadata_list = self.CharacterMetadata.load_all_from_directory(self.temp_dir.name)
 
         # Should still process other valid files
-        self.assertEqual(len(metadata_list), 3, 
+        self.assertEqual(len(metadata_list), TEST_BASE_FILE_COUNT, 
             "Should skip malformed JSON files but process others")
 
     def tearDown(self):

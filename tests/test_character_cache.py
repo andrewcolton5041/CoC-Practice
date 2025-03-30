@@ -21,6 +21,11 @@ import sys
 import weakref
 from src.character_cache_core import CharacterCache
 from src.character_cache_stats import get_cache_stats, clear_cache
+from src.constants import (
+    TEST_CACHE_SIZE,
+    TEST_FILE_MODIFICATION_DELAY,
+    TEST_LOAD_TIME_THRESHOLD
+)
 
 
 class TestCharacterCache(unittest.TestCase):
@@ -32,7 +37,7 @@ class TestCharacterCache(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
 
         # Create the cache instance with a small max_size for testing
-        self.cache = CharacterCache(max_size=3)
+        self.cache = CharacterCache(max_size=TEST_CACHE_SIZE)
 
         # Create test character data
         self.test_character = {
@@ -132,7 +137,7 @@ class TestCharacterCache(unittest.TestCase):
         self.cache.load_character(self.test_filename)
 
         # Wait a moment and modify the file
-        time.sleep(0.1)
+        time.sleep(TEST_FILE_MODIFICATION_DELAY)
         modified_character = self.test_character.copy()
         modified_character["name"] = "Modified Character"
 
@@ -207,7 +212,7 @@ class TestCharacterCache(unittest.TestCase):
 
         # Verify all three are in the cache
         stats = get_cache_stats(self.cache)
-        self.assertEqual(stats["size"], 3)
+        self.assertEqual(stats["size"], TEST_CACHE_SIZE)
         self.assertIn(self.test_filename, stats["files"])
         self.assertIn(self.test_filename2, stats["files"])
         self.assertIn(self.test_filename3, stats["files"])
@@ -217,7 +222,7 @@ class TestCharacterCache(unittest.TestCase):
 
         # Verify the first character was evicted
         stats = get_cache_stats(self.cache)
-        self.assertEqual(stats["size"], 3)
+        self.assertEqual(stats["size"], TEST_CACHE_SIZE)
         self.assertNotIn(self.test_filename, stats["files"])
         self.assertIn(self.test_filename2, stats["files"])
         self.assertIn(self.test_filename3, stats["files"])
@@ -226,7 +231,7 @@ class TestCharacterCache(unittest.TestCase):
     def test_cache_stats(self):
         """Test that cache statistics are correctly maintained."""
         # Create multiple cache instances to ensure clean stats
-        cache = CharacterCache(max_size=3)
+        cache = CharacterCache(max_size=TEST_CACHE_SIZE)
 
         # Fresh cache should have no hits or misses
         stats = get_cache_stats(cache)

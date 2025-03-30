@@ -16,6 +16,10 @@ import time
 import json
 import tempfile
 from src.character_metadata import CharacterMetadata
+from src.constants import (
+    TEST_LOAD_TIME_THRESHOLD,
+    TEST_LARGE_FILE_SIZE
+)
 
 
 class TestOptimizedMetadataLoading(unittest.TestCase):
@@ -81,7 +85,7 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
             "name": "Large Character",
             "occupation": "Test Occupation",
             "nationality": "Test Nation",
-            "backstory": "X" * 1000000  # 1MB of data
+            "backstory": "X" * TEST_LARGE_FILE_SIZE  # 1MB of data
         }
 
         large_filename = os.path.join(self.temp_dir.name, "large_character.json")
@@ -95,7 +99,8 @@ class TestOptimizedMetadataLoading(unittest.TestCase):
 
         # Verify that loading was fast (shouldn't read the whole file)
         load_time = end_time - start_time
-        self.assertLess(load_time, 0.1, f"Loading took {load_time} seconds, which suggests full file reading")
+        self.assertLess(load_time, TEST_LOAD_TIME_THRESHOLD, 
+                         f"Loading took {load_time} seconds, which suggests full file reading")
 
         # Verify the metadata was correctly extracted
         self.assertEqual(metadata.name, "Large Character")

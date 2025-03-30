@@ -47,6 +47,23 @@ STAT_NEWEST_AGE = 'newest_entry_age'
 PERCENTAGE_MULTIPLIER = 100
 DEFAULT_CACHE_SIZE = 15
 
+# === Testing Constants ===
+TEST_CACHE_SIZE = 3  # Small cache size for testing
+TEST_FILE_MODIFICATION_DELAY = 0.1  # Delay in seconds for file modification tests
+TEST_LOAD_TIME_THRESHOLD = 0.1  # Performance threshold in seconds for metadata loading
+TEST_LARGE_FILE_SIZE = 1000000  # 1MB size for large file testing
+TEST_DICE_SEED = 42  # Seed for deterministic dice rolling in tests
+TEST_DICE_ROLL_COUNT = 10  # Number of dice rolls for testing variability
+TEST_SCANNING_TIME_THRESHOLD = 1.0  # Maximum time in seconds allowed for directory scanning
+TEST_LARGE_FILE_COUNT = 100  # Number of files to create for performance testing
+TEST_BASE_FILE_COUNT = 3  # Base number of test character files created in setUp
+
+# === Dice Test Notations ===
+TEST_SIMPLE_DICE = "3D6"
+TEST_COMPLEX_DICE = "(2D6+6)*5"
+TEST_SIMPLE_DICE_MIN = 3  # Minimum possible value for 3D6
+TEST_SIMPLE_DICE_MAX = 18  # Maximum possible value for 3D6
+
 # === Rules Constants ===
 EXTREME_SUCCESS_DIVISOR = 5
 HARD_SUCCESS_DIVISOR = 2
@@ -113,11 +130,6 @@ CACHE_SIZE_CANCEL = 0
 MENU_OPTION_MIN = 1
 MAIN_MENU_OPTION_MAX = 6
 TEST_MENU_OPTION_MAX = 6
-
-# UI Prompts
-PROMPT_CACHE_SIZE = f"Enter new maximum cache size ({CACHE_SIZE_MIN}-{CACHE_SIZE_MAX}, or {CACHE_SIZE_CANCEL} to cancel): "
-PROMPT_PRESS_ENTER = "Press Enter to continue..."
-
 
 # UI Prompts
 PROMPT_CACHE_SIZE = f"Enter new maximum cache size ({CACHE_SIZE_MIN}-{CACHE_SIZE_MAX}, or {CACHE_SIZE_CANCEL} to cancel): "

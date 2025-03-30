@@ -27,6 +27,14 @@ from src.dice_parser_exceptions import (
     LimitExceededError, 
     DiceParserError
 )
+from src.constants import (
+    TEST_DICE_SEED,
+    TEST_DICE_ROLL_COUNT,
+    TEST_SIMPLE_DICE,
+    TEST_COMPLEX_DICE,
+    TEST_SIMPLE_DICE_MIN,
+    TEST_SIMPLE_DICE_MAX
+)
 
 
 class TestDiceParserMemoization(unittest.TestCase):
@@ -37,17 +45,17 @@ class TestDiceParserMemoization(unittest.TestCase):
         self.parser_core = DiceParserCore()
         self.parser_utils = DiceParserUtils()
         # Set a fixed seed for deterministic testing
-        random.seed(42)
+        random.seed(TEST_DICE_SEED)
 
     def test_tokenization_simple_dice(self):
         """Test basic dice notation tokenization."""
-        tokens = self.parser_core.tokenize("3D6")
+        tokens = self.parser_core.tokenize(TEST_SIMPLE_DICE)
         self.assertEqual(len(tokens), 1)
         self.assertEqual(tokens[0], ('DICE', (3, 6)))
 
     def test_tokenization_complex_expression(self):
         """Test tokenization of a complex dice expression."""
-        tokens = self.parser_core.tokenize("(2D6+6)*5")
+        tokens = self.parser_core.tokenize(TEST_COMPLEX_DICE)
         expected_tokens = [
             ('LPAREN', '('),
             ('DICE', (2, 6)),
@@ -61,7 +69,7 @@ class TestDiceParserMemoization(unittest.TestCase):
 
     def test_validation_simple_expression(self):
         """Test validation of a simple dice expression."""
-        tokens = self.parser_core.tokenize("3D6")
+        tokens = self.parser_core.tokenize(TEST_SIMPLE_DICE)
         try:
             self.parser_core.validate_tokens(tokens)
         except Exception as e:
@@ -69,7 +77,7 @@ class TestDiceParserMemoization(unittest.TestCase):
 
     def test_validation_complex_expression(self):
         """Test validation of a complex dice expression."""
-        tokens = self.parser_core.tokenize("(2D6+6)*5")
+        tokens = self.parser_core.tokenize(TEST_COMPLEX_DICE)
         try:
             self.parser_core.validate_tokens(tokens)
         except Exception as e:
@@ -77,39 +85,39 @@ class TestDiceParserMemoization(unittest.TestCase):
 
     def test_parse_simple_dice(self):
         """Test parsing of a simple dice notation."""
-        tokens = self.parser_core.tokenize("3D6")
+        tokens = self.parser_core.tokenize(TEST_SIMPLE_DICE)
 
         # Run multiple times to check consistency
         results = []
-        for _ in range(10):
+        for _ in range(TEST_DICE_ROLL_COUNT):
             result = self.parser_core.parse(tokens)
             results.append(result)
-            self.assertTrue(3 <= result <= 18)  # 3D6 range
+            self.assertTrue(TEST_SIMPLE_DICE_MIN <= result <= TEST_SIMPLE_DICE_MAX)  # 3D6 range
 
         # Ensure variability in results
         self.assertTrue(len(set(results)) > 1)
 
     def test_parse_deterministic_mode(self):
         """Test parsing in deterministic mode."""
-        tokens = self.parser_core.tokenize("3D6")
+        tokens = self.parser_core.tokenize(TEST_SIMPLE_DICE)
 
         # First roll
-        random.seed(42)
+        random.seed(TEST_DICE_SEED)
         first_result = self.parser_core.parse(tokens, deterministic=True)
 
         # Second roll should be identical
-        random.seed(42)
+        random.seed(TEST_DICE_SEED)
         second_result = self.parser_core.parse(tokens, deterministic=True)
 
         self.assertEqual(first_result, second_result)
 
     def test_parse_complex_expression(self):
         """Test parsing of a complex dice expression."""
-        tokens = self.parser_core.tokenize("(2D6+6)*5")
+        tokens = self.parser_core.tokenize(TEST_COMPLEX_DICE)
 
         # Run multiple times to check consistency
         results = []
-        for _ in range(10):
+        for _ in range(TEST_DICE_ROLL_COUNT):
             result = self.parser_core.parse(tokens)
             results.append(result)
 
@@ -147,13 +155,13 @@ class TestDiceParserMemoization(unittest.TestCase):
     def test_notation_parsing_utility(self):
         """Test the dice notation parsing utility method."""
         test_cases = [
-            ("3D6", {
+            (TEST_SIMPLE_DICE, {
                 'dice': [(3, 6)],
                 'numbers': [],
                 'operators': [],
                 'parentheses': []
             }),
-            ("(2D6+6)*5", {
+            (TEST_COMPLEX_DICE, {
                 'dice': [(2, 6)],
                 'numbers': [6, 5],
                 'operators': ['+', '*'],
@@ -168,12 +176,12 @@ class TestDiceParserMemoization(unittest.TestCase):
     def test_validation_utility(self):
         """Test the dice notation validation utility."""
         valid_expressions = [
-            "3D6", 
+            TEST_SIMPLE_DICE, 
             "2D6+5", 
             "(3D6)*2", 
             "1D100", 
             "3D6+2", 
-            "(2D6+6)*5",
+            TEST_COMPLEX_DICE,
             "1D20*2+3"
         ]
         invalid_expressions = [
