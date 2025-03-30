@@ -10,64 +10,53 @@ Last Updated: 2025-03-30
 """
 
 import time
-
+from src.constants import (
+    PERCENTAGE_MULTIPLIER,
+    KEY_CACHE_TIME,
+    STAT_SIZE,
+    STAT_ACTIVE_ENTRIES,
+    STAT_FILES,
+    STAT_MEMORY_USAGE,
+    STAT_MAX_SIZE,
+    STAT_HIT_RATE,
+    STAT_HITS,
+    STAT_MISSES,
+    STAT_OLDEST_AGE,
+    STAT_NEWEST_AGE,
+)
 
 def get_cache_stats(cache):
     """
     Get statistics about the character cache.
-
-    Args:
-        cache (CharacterCache): The character cache instance
-
-    Returns:
-        dict: Dictionary with cache statistics including:
-            - size: Number of entries in the cache
-            - active_entries: Number of active cache entries
-            - files: List of filenames in the cache
-            - memory_usage: Approximate memory usage in bytes
-            - max_size: Maximum cache size setting
-            - hit_rate: Percentage of successful cache retrievals
-            - hits: Number of cache hits
-            - misses: Number of cache misses
     """
     stats = {
-        "size": len(cache._cache),
-        "active_entries": len(cache._cache),
-        "files": list(cache._cache.keys()),
-        "memory_usage": sum(len(str(item)) for item in cache._cache.values()),
-        "max_size": cache._max_size
+        STAT_SIZE: len(cache._cache),
+        STAT_ACTIVE_ENTRIES: len(cache._cache),
+        STAT_FILES: list(cache._cache.keys()),
+        STAT_MEMORY_USAGE: sum(len(str(item)) for item in cache._cache.values()),
+        STAT_MAX_SIZE: cache._max_size
     }
 
-    # Calculate cache entry ages if cache is not empty
     if cache._cache:
         current_time = time.time()
-        cache_times = [entry["cached_time"] for entry in cache._cache.values()]
-        stats["oldest_entry_age"] = current_time - min(cache_times)
-        stats["newest_entry_age"] = current_time - max(cache_times)
+        cache_times = [entry[KEY_CACHE_TIME] for entry in cache._cache.values()]
+        stats[STAT_OLDEST_AGE] = current_time - min(cache_times)
+        stats[STAT_NEWEST_AGE] = current_time - max(cache_times)
 
-    # Calculate hit rate
     total_accesses = cache._hits + cache._misses
-    stats["hit_rate"] = (cache._hits / total_accesses * 100) if total_accesses > 0 else 0
-    stats["hits"] = cache._hits
-    stats["misses"] = cache._misses
+    stats[STAT_HIT_RATE] = (
+        (cache._hits / total_accesses) * PERCENTAGE_MULTIPLIER
+        if total_accesses > 0 else 0
+    )
+    stats[STAT_HITS] = cache._hits
+    stats[STAT_MISSES] = cache._misses
 
     return stats
-
 
 def clear_cache(cache):
     """
     Clear the character cache and return statistics about the cleared cache.
-
-    Args:
-        cache (CharacterCache): The character cache instance
-
-    Returns:
-        dict: Statistics about the cache before clearing
     """
-    # Capture current stats before clearing
     current_stats = get_cache_stats(cache)
-
-    # Clear the cache
     cache.invalidate()
-
     return current_stats

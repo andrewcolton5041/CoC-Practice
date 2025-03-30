@@ -8,6 +8,8 @@ Version: 2.1
 Last Updated: 2025-03-30
 """
 
+from src.constants import REQUIRED_FIELDS
+
 def validate_character_data(character_data):
     """
     Validate that character data contains all required fields.
@@ -18,5 +20,4 @@ def validate_character_data(character_data):
     Returns:
         bool: True if valid, False otherwise
     """
-    required_fields = ['name', 'attributes']
-    return all(field in character_data for field in required_fields)
+    return all(field in character_data for field in REQUIRED_FIELDS)

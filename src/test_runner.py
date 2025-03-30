@@ -4,9 +4,6 @@ Test Runner Module for Call of Cthulhu Character Viewer
 This module handles the execution of test suites for the application,
 providing a consistent interface for running different test categories.
 
-The module loads and executes test suites using the unittest framework,
-providing formatted output and error handling.
-
 Author: Unknown
 Version: 2.0
 Last Updated: 2025-03-30
@@ -16,296 +13,96 @@ import os
 import unittest
 import sys
 import importlib
+import constants
+
+
+def run_test_suite(module_key, test_description):
+    """
+    Generalized function to run specified test suite.
+
+    Args:
+        module_key (str): Key of the test module in constants.TEST_MODULES
+        test_description (str): Description to print when running tests
+
+    Returns:
+        bool: True if all tests passed, False otherwise
+    """
+    test_module_name = constants.TEST_MODULES[module_key]
+    test_module_path = os.path.join(constants.TESTS_DIRECTORY, f"{test_module_name}.py")
+
+    print(f"\n=== Running {test_description} ===\n")
+
+    try:
+        if not os.path.exists(test_module_path):
+            print(f"Error: {test_module_path} not found!")
+            return False
+
+        tests_path = os.path.abspath(constants.TESTS_DIRECTORY)
+        if tests_path not in sys.path:
+            sys.path.insert(0, tests_path)
+
+        if test_module_name in sys.modules:
+            test_module = importlib.reload(sys.modules[test_module_name])
+        else:
+            test_module = importlib.import_module(test_module_name)
+
+        loader = unittest.TestLoader()
+        test_suite = loader.loadTestsFromModule(test_module)
+        runner = unittest.TextTestRunner(verbosity=2)
+        result = runner.run(test_suite)
+
+        print("\n=== Test Summary ===")
+        print(f"Ran {result.testsRun} tests")
+        print(f"Failures: {len(result.failures)}")
+        print(f"Errors: {len(result.errors)}")
+        print(f"Skipped: {len(result.skipped)}")
+
+        return len(result.failures) == 0 and len(result.errors) == 0
+
+    except Exception as e:
+        print(f"Error running {test_description.lower()}: {e}")
+        return False
+    finally:
+        print("\n" + "=" * 50)
 
 
 def run_dice_parser_tests():
-    """
-    Run the dice parser test suite.
-
-    This function loads and executes the tests defined in tests/test_dice_parser.py.
-    It uses the unittest framework to discover and run the tests.
-
-    Returns:
-        bool: True if all tests passed, False otherwise
-    """
-    print("\n=== Running Dice Parser Tests ===\n")
-
-    try:
-        # Check if the test file exists in the tests directory
-        if not os.path.exists('tests/test_dice_parser.py'):
-            print("Error: tests/test_dice_parser.py not found!")
-            return False
-
-        # Import the test module
-        try:
-            # Add tests directory to path if not already there
-            tests_path = os.path.abspath('tests')
-            if tests_path not in sys.path:
-                sys.path.insert(0, tests_path)
-
-            # Import the module
-            if 'test_dice_parser' in sys.modules:
-                # Reload if already imported
-                test_module = importlib.reload(sys.modules['test_dice_parser'])
-            else:
-                # Import if not already imported
-                test_module = importlib.import_module('test_dice_parser')
-        except ImportError as e:
-            print(f"Error: Failed to import test_dice_parser module: {e}")
-            return False
-
-        # Create a test loader
-        loader = unittest.TestLoader()
-
-        # Load tests from the test module
-        test_suite = loader.loadTestsFromModule(test_module)
-
-        # Create a test runner
-        runner = unittest.TextTestRunner(verbosity=2)
-
-        # Run the tests
-        result = runner.run(test_suite)
-
-        # Print a summary
-        print("\n=== Test Summary ===")
-        print(f"Ran {result.testsRun} tests")
-        print(f"Failures: {len(result.failures)}")
-        print(f"Errors: {len(result.errors)}")
-        print(f"Skipped: {len(result.skipped)}")
-
-        # Return True if all tests passed
-        return len(result.failures) == 0 and len(result.errors) == 0
-
-    except Exception as e:
-        print(f"Error running dice parser tests: {e}")
-        return False
-    finally:
-        print("\n" + "=" * 50)
+    return run_test_suite('dice_parser', 'Dice Parser Tests')
 
 
 def run_character_metadata_tests():
-    """
-    Run the character metadata test suite.
-
-    This function loads and executes the tests defined in tests/test_character_metadata.py.
-    It uses the unittest framework to discover and run the tests.
-
-    Returns:
-        bool: True if all tests passed, False otherwise
-    """
-    print("\n=== Running Character Metadata Tests ===\n")
-
-    try:
-        # Check if the test file exists in the tests directory
-        if not os.path.exists('tests/test_character_metadata.py'):
-            print("Error: tests/test_character_metadata.py not found!")
-            return False
-
-        # Import the test module
-        try:
-            # Add tests directory to path if not already there
-            tests_path = os.path.abspath('tests')
-            if tests_path not in sys.path:
-                sys.path.insert(0, tests_path)
-
-            # Import the module
-            if 'test_character_metadata' in sys.modules:
-                # Reload if already imported
-                test_module = importlib.reload(sys.modules['test_character_metadata'])
-            else:
-                # Import if not already imported
-                test_module = importlib.import_module('test_character_metadata')
-        except ImportError as e:
-            print(f"Error: Failed to import test_character_metadata module: {e}")
-            return False
-
-        # Create a test loader
-        loader = unittest.TestLoader()
-
-        # Load tests from the test module
-        test_suite = loader.loadTestsFromModule(test_module)
-
-        # Create a test runner
-        runner = unittest.TextTestRunner(verbosity=2)
-
-        # Run the tests
-        result = runner.run(test_suite)
-
-        # Print a summary
-        print("\n=== Test Summary ===")
-        print(f"Ran {result.testsRun} tests")
-        print(f"Failures: {len(result.failures)}")
-        print(f"Errors: {len(result.errors)}")
-        print(f"Skipped: {len(result.skipped)}")
-
-        # Return True if all tests passed
-        return len(result.failures) == 0 and len(result.errors) == 0
-
-    except Exception as e:
-        print(f"Error running character metadata tests: {e}")
-        return False
-    finally:
-        print("\n" + "=" * 50)
+    return run_test_suite('character_metadata', 'Character Metadata Tests')
 
 
 def run_character_cache_tests():
-    """
-    Run the character cache test suite.
-
-    This function loads and executes the tests defined in tests/test_character_cache.py.
-    It uses the unittest framework to discover and run the tests.
-
-    Returns:
-        bool: True if all tests passed, False otherwise
-    """
-    print("\n=== Running Character Cache Tests ===\n")
-
-    try:
-        # Check if the test file exists in the tests directory
-        if not os.path.exists('tests/test_character_cache.py'):
-            print("Error: tests/test_character_cache.py not found!")
-            return False
-
-        # Import the test module
-        try:
-            # Add tests directory to path if not already there
-            tests_path = os.path.abspath('tests')
-            if tests_path not in sys.path:
-                sys.path.insert(0, tests_path)
-
-            # Import the module
-            if 'test_character_cache' in sys.modules:
-                # Reload if already imported
-                test_module = importlib.reload(sys.modules['test_character_cache'])
-            else:
-                # Import if not already imported
-                test_module = importlib.import_module('test_character_cache')
-        except ImportError as e:
-            print(f"Error: Failed to import test_character_cache module: {e}")
-            return False
-
-        # Create a test loader
-        loader = unittest.TestLoader()
-
-        # Load tests from the test module
-        test_suite = loader.loadTestsFromModule(test_module)
-
-        # Create a test runner
-        runner = unittest.TextTestRunner(verbosity=2)
-
-        # Run the tests
-        result = runner.run(test_suite)
-
-        # Print a summary
-        print("\n=== Test Summary ===")
-        print(f"Ran {result.testsRun} tests")
-        print(f"Failures: {len(result.failures)}")
-        print(f"Errors: {len(result.errors)}")
-        print(f"Skipped: {len(result.skipped)}")
-
-        # Return True if all tests passed
-        return len(result.failures) == 0 and len(result.errors) == 0
-
-    except Exception as e:
-        print(f"Error running character cache tests: {e}")
-        return False
-    finally:
-        print("\n" + "=" * 50)
+    return run_test_suite('character_cache', 'Character Cache Tests')
 
 
 def run_metadata_loading_tests():
-    """
-    Run the optimized metadata loading test suite.
-
-    This function loads and executes the tests defined in tests/test_metadata_loading.py.
-    It uses the unittest framework to discover and run the tests.
-
-    Returns:
-        bool: True if all tests passed, False otherwise
-    """
-    print("\n=== Running Optimized Metadata Loading Tests ===\n")
-
-    try:
-        # Check if the test file exists in the tests directory
-        if not os.path.exists('tests/test_metadata_loading.py'):
-            print("Error: tests/test_metadata_loading.py not found!")
-            return False
-
-        # Import the test module
-        try:
-            # Add tests directory to path if not already there
-            tests_path = os.path.abspath('tests')
-            if tests_path not in sys.path:
-                sys.path.insert(0, tests_path)
-
-            # Import the module
-            if 'test_metadata_loading' in sys.modules:
-                # Reload if already imported
-                test_module = importlib.reload(sys.modules['test_metadata_loading'])
-            else:
-                # Import if not already imported
-                test_module = importlib.import_module('test_metadata_loading')
-        except ImportError as e:
-            print(f"Error: Failed to import test_metadata_loading module: {e}")
-            return False
-
-        # Create a test loader
-        loader = unittest.TestLoader()
-
-        # Load tests from the test module
-        test_suite = loader.loadTestsFromModule(test_module)
-
-        # Create a test runner
-        runner = unittest.TextTestRunner(verbosity=2)
-
-        # Run the tests
-        result = runner.run(test_suite)
-
-        # Print a summary
-        print("\n=== Test Summary ===")
-        print(f"Ran {result.testsRun} tests")
-        print(f"Failures: {len(result.failures)}")
-        print(f"Errors: {len(result.errors)}")
-        print(f"Skipped: {len(result.skipped)}")
-
-        # Return True if all tests passed
-        return len(result.failures) == 0 and len(result.errors) == 0
-
-    except Exception as e:
-        print(f"Error running optimized metadata loading tests: {e}")
-        return False
-    finally:
-        print("\n" + "=" * 50)
+    return run_test_suite('metadata_loading', 'Optimized Metadata Loading Tests')
 
 
 def run_all_tests():
     """
     Run all available test suites in sequence.
 
-    This function runs all test categories and collects overall results.
-
     Returns:
-        bool: True if all tests in all suites passed, False otherwise
+        bool: True if all tests passed, False otherwise
     """
     print("\n=== Running All Test Suites ===\n")
 
-    all_passed = True
-
-    # Run each test suite in sequence
     dice_tests_passed = run_dice_parser_tests()
     metadata_tests_passed = run_character_metadata_tests()
     cache_tests_passed = run_character_cache_tests()
     loading_tests_passed = run_metadata_loading_tests()
 
-    # Check if all tests passed
-    all_passed = (
-        dice_tests_passed and 
-        metadata_tests_passed and 
-        cache_tests_passed and 
+    all_passed = all([
+        dice_tests_passed,
+        metadata_tests_passed,
+        cache_tests_passed,
         loading_tests_passed
-    )
+    ])
 
-    # Print overall summary
     print("\n=== Overall Test Summary ===")
     print(f"Dice Parser Tests: {'PASS' if dice_tests_passed else 'FAIL'}")
     print(f"Character Metadata Tests: {'PASS' if metadata_tests_passed else 'FAIL'}")
@@ -320,39 +117,27 @@ def discover_and_run_tests():
     """
     Automatically discover and run all test files in the tests directory.
 
-    This function uses unittest's test discovery to find and run all tests.
-
     Returns:
         bool: True if all tests passed, False otherwise
     """
     print("\n=== Discovering and Running All Tests ===\n")
 
     try:
-        # Check if the tests directory exists
-        if not os.path.exists('tests'):
-            print("Error: 'tests' directory not found!")
+        if not os.path.exists(constants.TESTS_DIRECTORY):
+            print(f"Error: '{constants.TESTS_DIRECTORY}' directory not found!")
             return False
 
-        # Create a test loader
         loader = unittest.TestLoader()
-
-        # Discover tests in the tests directory
-        test_suite = loader.discover('tests', pattern='test_*.py')
-
-        # Create a test runner
+        test_suite = loader.discover(constants.TESTS_DIRECTORY, pattern=constants.TEST_PATTERN)
         runner = unittest.TextTestRunner(verbosity=2)
-
-        # Run the tests
         result = runner.run(test_suite)
 
-        # Print a summary
         print("\n=== Test Summary ===")
         print(f"Ran {result.testsRun} tests")
         print(f"Failures: {len(result.failures)}")
         print(f"Errors: {len(result.errors)}")
         print(f"Skipped: {len(result.skipped)}")
 
-        # Return True if all tests passed
         return len(result.failures) == 0 and len(result.errors) == 0
 
     except Exception as e:
