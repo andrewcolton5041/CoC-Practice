@@ -1,0 +1,22 @@
+"""
+Character Cache Utility Functions for Call of Cthulhu Character Viewer
+
+This module provides additional utility functions related to character caching.
+
+Author: Unknown
+Version: 2.1
+Last Updated: 2025-03-30
+"""
+
+def validate_character_data(character_data):
+    """
+    Validate that character data contains all required fields.
+
+    Args:
+        character_data (dict): Character data to validate
+
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    required_fields = ['name', 'attributes']
+    return all(field in character_data for field in required_fields)

@@ -19,6 +19,7 @@ Last Updated: 2025-03-30
 import sys
 from src.ui import main_menu
 from src.character_loader import load_character_from_json
+from src.character_cache_core import CharacterCache
 from src.test_runner import (
     run_dice_parser_tests,
     run_character_metadata_tests,

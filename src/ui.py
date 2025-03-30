@@ -14,99 +14,11 @@ Last Updated: 2025-03-30
 
 import os
 import sys
+import json
 from src.character_metadata import CharacterMetadata
-from src.character_cache import CharacterCache
-from src.character_display import display_character, display_cache_stats
-
-
-def display_character(character_data):
-    """
-    Display a character's sheet in a formatted way to the console.
-
-    Prints all relevant character information including:
-    - Basic info (name, age, occupation)
-    - Attributes (STR, DEX, etc.)
-    - Skills
-    - Weapons
-    - Backstory
-
-    Args:
-        character_data (dict): Dictionary containing the character data
-
-    Returns:
-        None
-    """
-    if not character_data:
-        print("Error: No character data to display.")
-        return
-
-    # Print divider line and basic character information
-    print("\n" + "=" * 50)
-    print(f"Name: {character_data['name']}")
-    print(f"Age: {character_data.get('age', 'Unknown')}")
-    print(f"Occupation: {character_data.get('occupation', 'Unknown')}")
-    print(f"Nationality: {character_data.get('nationality', 'Unknown')}")
-
-    # Print character attributes
-    print("\n--- Attributes ---")
-    for attr, value in character_data.get('attributes', {}).items():
-        print(f"{attr}: {value}")
-
-    # Print character skills if available
-    if 'skills' in character_data:
-        print("\n--- Skills ---")
-        for skill, value in character_data['skills'].items():
-            print(f"{skill}: {value}")
-
-    # Print character weapons if available
-    if 'weapons' in character_data:
-        print("\n--- Weapons ---")
-        for weapon in character_data['weapons']:
-            print(
-                f"{weapon['name']} - Skill: {weapon['skill']} - Damage: {weapon['damage']}"
-            )
-
-    # Print character backstory if available
-    if 'backstory' in character_data:
-        print("\n--- Backstory ---")
-        print(character_data['backstory'])
-
-    # Print closing divider
-    print("=" * 50 + "\n")
-
-
-def display_cache_stats(cache):
-    """
-    Display statistics about the character cache.
-
-    Args:
-        cache (CharacterCache): The character cache instance
-
-    Returns:
-        None
-    """
-    stats = cache.get_stats()
-    print("\n--- Cache Status ---")
-    print(f"Characters in cache metadata: {stats['size']}")
-    print(f"Active entries in cache: {stats['active_entries']}")
-    print(f"Maximum cache size: {stats['max_size']}")
-    print(f"Approximate memory usage: {stats['memory_usage']} bytes")
-
-    # Display hit rate statistics
-    total_accesses = stats.get('hits', 0) + stats.get('misses', 0)
-    if total_accesses > 0:
-        print(f"Cache hit rate: {stats.get('hit_rate', 0):.1f}% ({stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses)")
-
-    if stats['size'] > 0:
-        print("\nCached characters:")
-        for i, char_file in enumerate(stats['files'], 1):
-            print(f"{i}. {char_file}")
-
-        if 'oldest_entry_age' in stats:
-            print(f"\nOldest entry age: {stats['oldest_entry_age']:.1f} seconds")
-            print(f"Newest entry age: {stats['newest_entry_age']:.1f} seconds")
-    else:
-        print("\nNo characters in cache.")
+from src.character_cache_core import CharacterCache
+from src.character_cache_stats import get_cache_stats, clear_cache
+from src.character_display import display_character
 
 
 def get_user_selection(prompt, min_value, max_value):
@@ -185,7 +97,8 @@ def configure_cache_settings(cache):
         None
     """
     print("\n=== Cache Configuration ===")
-    print(f"Current maximum cache size: {cache._max_size}")
+    stats = get_cache_stats(cache)
+    print(f"Current maximum cache size: {stats['max_size']}")
 
     # Get new cache size from user
     try:
@@ -195,26 +108,60 @@ def configure_cache_settings(cache):
             print("Cache configuration canceled.")
             return
 
-        # Update cache size
-        cache._max_size = new_size
+        # Create a new cache with the updated size
+        # Effectively reset the cache to the new size
+        new_cache = CharacterCache(max_size=new_size)
+
+        # Copy over the most recently used entries that fit within the new size
+        for filename in stats['files'][-new_size:]:
+            try:
+                # Re-add the most recently used entries
+                with open(filename, 'r', encoding='utf-8') as f:
+                    character_data = json.load(f)
+                new_cache.put(filename, character_data)
+            except Exception as e:
+                print(f"Error re-adding {filename} to new cache: {e}")
+
         print(f"Maximum cache size updated to {new_size}.")
-
-        # Note: We may need to enforce the new limit by clearing excess entries
-        current_size = len(cache._cache)
-        if current_size > new_size:
-            # Remove oldest entries to meet new size
-            excess = current_size - new_size
-            for _ in range(excess):
-                if cache._cache:
-                    # Remove least recently used item (first item in OrderedDict)
-                    cache._cache.popitem(last=False)
-
-            print(f"Removed {excess} least recently used entries to meet new cache size limit.")
 
     except (ValueError, TypeError):
         print("Invalid input. Cache configuration canceled.")
     except Exception as e:
         print(f"Error configuring cache: {e}")
+
+
+def display_cache_stats(cache):
+    """
+    Display statistics about the character cache.
+
+    Args:
+        cache (CharacterCache): The character cache instance
+
+    Returns:
+        None
+    """
+    stats = get_cache_stats(cache)
+    print("\n--- Cache Status ---")
+    print(f"Characters in cache metadata: {stats['size']}")
+    print(f"Active entries in cache: {stats['active_entries']}")
+    print(f"Maximum cache size: {stats['max_size']}")
+    print(f"Approximate memory usage: {stats['memory_usage']} bytes")
+
+    # Display hit rate statistics
+    total_accesses = stats.get('hits', 0) + stats.get('misses', 0)
+    if total_accesses > 0:
+        print(f"Cache hit rate: {stats.get('hit_rate', 0):.1f}% ({stats.get('hits', 0)} hits, {stats.get('misses', 0)} misses)")
+
+    if stats['size'] > 0:
+        print("\nCached characters:")
+        for i, char_file in enumerate(stats['files'], 1):
+            print(f"{i}. {char_file}")
+
+        if 'oldest_entry_age' in stats:
+            print(f"\nOldest entry age: {stats['oldest_entry_age']:.1f} seconds")
+            print(f"Newest entry age: {stats['newest_entry_age']:.1f} seconds")
+    else:
+        print("\nNo characters in cache.")
 
 
 def run_tests_menu(run_dice_parser_tests, run_character_metadata_tests, 
@@ -367,7 +314,7 @@ def main_menu(load_character_from_json, run_dice_parser_tests, run_character_met
 
             elif choice == 2:
                 # Clear the character cache
-                cache.invalidate()
+                clear_cache(cache)
                 print("Character cache cleared successfully.")
 
             elif choice == 3:

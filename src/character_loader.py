@@ -6,13 +6,13 @@ caching and validation. It provides functions for loading individual characters
 and validating character data structure.
 
 Author: Unknown
-Version: 1.0
+Version: 1.1
 Last Updated: 2025-03-30
 """
 
 import os
 import json
-from src.character_cache import CharacterCache
+from src.character_cache_core import CharacterCache
 
 
 def validate_character_data(character_data):

@@ -1,16 +1,11 @@
 """
-Character Cache Module for Call of Cthulhu Character Viewer
+Character Cache Core Module for Call of Cthulhu Character Viewer
 
-This module provides a caching mechanism for character data, improving
-performance by reducing the need to repeatedly read character files from disk.
-
-The main class is CharacterCache, which handles:
-- Storing character data with an LRU (Least Recently Used) eviction policy
-- Validating whether cached data is still current
-- Providing statistics about cache usage and memory consumption
+This module provides the core caching mechanism for character data,
+focusing on the fundamental caching operations and least recently used (LRU) policy.
 
 Author: Unknown
-Version: 2.0
+Version: 2.1
 Last Updated: 2025-03-30
 """
 
@@ -141,43 +136,6 @@ class CharacterCache:
             bool: True if file is in the cache, False otherwise
         """
         return filename in self._cache
-
-    def get_stats(self):
-        """
-        Get statistics about the current state of the cache.
-
-        Returns:
-            dict: Dictionary with cache statistics including:
-                - size: Number of entries in the cache
-                - files: List of filenames in the cache
-                - memory_usage: Approximate memory usage in bytes
-                - oldest_entry_age: Age of the oldest cache entry in seconds
-                - newest_entry_age: Age of the newest cache entry in seconds
-                - hit_rate: Percentage of successful cache retrievals
-                - max_size: Maximum cache size setting
-        """
-        stats = {
-            "size": len(self._cache),
-            "active_entries": len(self._cache),  # Same as size for compatibility
-            "files": list(self._cache.keys()),
-            "memory_usage": sum(len(str(item)) for item in self._cache.values()),
-            "max_size": self._max_size
-        }
-
-        # Calculate age of entries if cache is not empty
-        if self._cache:
-            current_time = time.time()
-            cache_times = [entry["cached_time"] for entry in self._cache.values()]
-            stats["oldest_entry_age"] = current_time - min(cache_times)
-            stats["newest_entry_age"] = current_time - max(cache_times)
-
-        # Calculate hit rate
-        total_accesses = self._hits + self._misses
-        stats["hit_rate"] = (self._hits / total_accesses * 100) if total_accesses > 0 else 0
-        stats["hits"] = self._hits
-        stats["misses"] = self._misses
-
-        return stats
 
     def load_character(self, filename, validation_function=None):
         """
