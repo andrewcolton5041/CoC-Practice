@@ -1,20 +1,18 @@
 """
-Dice Roller Utility
+Dice Roller Utility for Call of Cthulhu RPG
 
-This script defines functions to parse and evaluate standard dice notation strings 
-(e.g., '2D6', '1D20+5', '3D4-2') commonly used in tabletop RPGs like Call of Cthulhu.
+This module provides functionality to parse and evaluate dice notation strings
+commonly used in tabletop RPGs like Call of Cthulhu.
 
-Supported Formats:
-- Basic:         "3D6" or "1D20+3" or "4D4-1"
-- Parenthetical: "(2D6+6)*5" or "(3D4-2)*2"
+The module can handle various dice formats including:
+- Basic rolls:         "3D6" or "1D20+3" or "4D4-1" 
+- Parenthetical rolls: "(2D6+6)*5" or "(3D4-2)*2"
 
-Functions:
-- roll_dice():     Parses and evaluates a dice string, returns the total result as an integer.
-- improvementCheck(): Determines if a stat can improve based on a 1D100 roll.
-- successCheck():  Evaluates a roll result against a stat and returns the success level.
+Each function is documented with its purpose, parameters, and return values.
 
-Raises:
-    ValueError if the input dice string format is invalid.
+Author: Unknown
+Version: 1.0
+Last Updated: Unknown
 """
 
 import re
@@ -24,48 +22,57 @@ import operator
 
 def roll_dice(dice_string):
     """
-    Parses and rolls a dice expression, with optional inner math and outer multiplication.
+    Parses and rolls a dice expression, evaluating the result according to RPG dice notation.
 
-    Example Inputs:
-        "3D6"
-        "1D20+3"
-        "(2D6+6)*5"
+    Supports standard dice notation with various formats:
+    - Simple dice rolls: "3D6", "1D20"
+    - Dice with modifiers: "1D20+3", "4D4-1"
+    - Complex expressions: "(2D6+6)*5"
+
+    Args:
+        dice_string (str): A string representing dice to roll in standard RPG notation.
 
     Returns:
-        Integer result of the evaluated dice roll.
+        int: The final calculated result of the dice roll expression.
+
+    Raises:
+        ValueError: If the input dice string format is invalid or cannot be parsed.
     """
-    # Regular expression matches either:
-    # - (XdY ± Z) * multiplier
-    # - XdY ± Z
+    # Regular expression pattern to match dice notation with or without parentheses and multiplier
+    # The pattern is verbose to handle complex dice expressions
     pattern = r"""
         ^\(\s*(\d+)D(\d+)\s*(?:([+\-*])\s*(\d+))?\)\s*\*\s*(\d+)$   # With parentheses and outer *
         |^(\d+)D(\d+)\s*(?:([+\-*])\s*(\d+))?$                     # Simple format
     """
+    # Attempt to match the dice string against our pattern
     match = re.fullmatch(pattern, dice_string.strip(), flags=re.IGNORECASE | re.VERBOSE)
 
+    # If no match, the format is invalid
     if not match:
         raise ValueError("Invalid dice string format")
 
-    # Parse matched groups based on which pattern matched
+    # Determine which pattern matched and extract the relevant components
     if match.group(1):  # Match with parentheses and outer multiplier
-        num_dice = int(match.group(1))
-        dice_sides = int(match.group(2))
-        op = match.group(3)
-        modifier = int(match.group(4)) if match.group(4) else 0
-        multiplier = int(match.group(5))
+        num_dice = int(match.group(1))      # Number of dice to roll
+        dice_sides = int(match.group(2))    # Number of sides on each die
+        op = match.group(3)                 # Operator for modifier (+, -, *)
+        modifier = int(match.group(4)) if match.group(4) else 0  # Numeric modifier
+        multiplier = int(match.group(5))    # Outer multiplier
     else:  # Simple format without outer multiplier
-        num_dice = int(match.group(6))
-        dice_sides = int(match.group(7))
-        op = match.group(8)
-        modifier = int(match.group(9)) if match.group(9) else 0
-        multiplier = 1
+        num_dice = int(match.group(6))      # Number of dice to roll
+        dice_sides = int(match.group(7))    # Number of sides on each die
+        op = match.group(8)                 # Operator for modifier
+        modifier = int(match.group(9)) if match.group(9) else 0  # Numeric modifier
+        multiplier = 1                      # Default multiplier (no effect)
 
-    # Roll the dice
+    # Roll the specified number of dice with the given sides
     rolls = [random.randint(1, dice_sides) for _ in range(num_dice)]
     total = sum(rolls)
 
-    # Apply inner operator if present
+    # Map operators to their corresponding functions
     ops = {'+': operator.add, '-': operator.sub, '*': operator.mul}
+
+    # Apply inner operator if present
     if op in ops:
         total = ops[op](total, modifier)
 
