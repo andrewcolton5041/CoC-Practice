@@ -30,41 +30,51 @@ class CharacterMetadata:
             filename (str): Path to the character JSON file
         """
         self.filename = filename
-        self.name = None
-        self.occupation = None
-        self.nationality = None
+        # Always initialize with default values
+        self.name = os.path.basename(filename).replace('.json', '').capitalize()
+        self.occupation = "Unknown"
+        self.nationality = "Unknown"
+        # Then try to load better values from the file
         self._load_metadata()
 
     def _load_metadata(self):
         """
         Load only the necessary metadata fields from the character file.
-
-        This method opens the JSON file but only extracts the fields needed
-        for display in the character list, minimizing memory usage.
         """
         try:
             # Only read the first 1024 bytes to extract basic info
             with open(self.filename, 'r', encoding='utf-8') as f:
                 file_header = f.read(1024)
 
-            # Parse the header portion to extract minimal data
-            # This is a simplified approach that works for well-formatted JSON
+            # Try to parse the header as JSON - check if it might be truncated
             try:
-                # Try to parse the header as JSON
                 header_data = json.loads(file_header)
-                self.name = header_data.get('name', os.path.basename(self.filename))
-                self.occupation = header_data.get('occupation', 'Unknown')
-                self.nationality = header_data.get('nationality', 'Unknown')
+                # The JSON might be incomplete if the file is large
+                # Make sure we're getting a complete "name" field
+                if 'name' in header_data:
+                    self.name = header_data['name']
+                if 'occupation' in header_data:
+                    self.occupation = header_data['occupation']
+                if 'nationality' in header_data:
+                    self.nationality = header_data['nationality']
             except json.JSONDecodeError:
-                # If parsing fails, use filename as fallback
-                self.name = os.path.basename(self.filename).replace('.json', '').capitalize()
-                self.occupation = 'Unknown'
-                self.nationality = 'Unknown'
+                # Try reading a bit more of the file
+                with open(self.filename, 'r', encoding='utf-8') as f:
+                    file_header = f.read(4096)  # Read more data
+                    try:
+                        header_data = json.loads(file_header)
+                        if 'name' in header_data:
+                            self.name = header_data['name']
+                        if 'occupation' in header_data:
+                            self.occupation = header_data['occupation']
+                        if 'nationality' in header_data:
+                            self.nationality = header_data['nationality']
+                    except json.JSONDecodeError:
+                        # Keep using default values set in __init__
+                        pass
         except (IOError, OSError):
-            # Use filename as fallback if file can't be read
-            self.name = os.path.basename(self.filename).replace('.json', '').capitalize()
-            self.occupation = 'Unknown'
-            self.nationality = 'Unknown'
+            # If file can't be read, keep using default values set in __init__
+            pass
 
     @classmethod
     def load_all_from_directory(cls, directory_path):

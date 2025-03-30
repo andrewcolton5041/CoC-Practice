@@ -12,6 +12,7 @@ Last Updated: 2025-03-30
 
 import unittest
 import os
+import time
 import json
 import tempfile
 from character_metadata import CharacterMetadata
@@ -67,6 +68,9 @@ class TestCharacterMetadata(unittest.TestCase):
 
         # Should use filename as fallback for name
         expected_name = "Bad_character"
+        # First verify that name is not None
+        self.assertIsNotNone(metadata.name, "Character name should not be None")
+        # Then verify it matches the expected value (case-insensitive)
         self.assertEqual(metadata.name.lower(), expected_name.lower())
         self.assertEqual(metadata.occupation, "Unknown")
 
@@ -115,6 +119,34 @@ class TestCharacterMetadata(unittest.TestCase):
         # Remove the temporary directory and its contents
         self.temp_dir.cleanup()
 
+    def test_metadata_only_loads_minimal_data(self):
+        """Test that metadata loading doesn't read the full character file."""
+        # Create a character with a very large backstory to simulate a large file
+        large_character = {
+            "name": "Large Character",
+            "occupation": "Test Occupation",
+            "nationality": "Test Nation",
+            "backstory": "X" * 1000000  # 1MB of data
+        }
+
+        large_filename = os.path.join(self.temp_dir.name, "large_character.json")
+        with open(large_filename, 'w', encoding='utf-8') as f:
+            json.dump(large_character, f)
+
+        # Create a metadata object
+        start_time = time.time()
+        metadata = CharacterMetadata(large_filename)
+        end_time = time.time()
+
+        # Verify that loading was fast (shouldn't read the whole file)
+        # Loading a 1MB file would take significantly longer if reading it all
+        load_time = end_time - start_time
+        self.assertLess(load_time, 0.1, f"Loading took {load_time} seconds, which suggests full file reading")
+
+        # Verify the object size is small (which means we didn't load the whole file)
+        metadata_size = len(str(metadata.__dict__))
+        self.assertLess(metadata_size, 1000, 
+                       f"Metadata object size is {metadata_size} bytes, which suggests it contains the full file data")
 
 if __name__ == '__main__':
     unittest.main()

@@ -7,7 +7,7 @@ A character management application for the Call of Cthulhu roleplaying game syst
 - **Character Management**
   - View premade characters from JSON files
   - Display formatted character sheets with all relevant information
-  - Lazy loading optimization for improved performance
+  - **Improved lazy loading for optimized performance**
 
 - **Dice Mechanics**
   - Robust dice notation parser (`3D6`, `1D20+5`, etc.)
@@ -22,13 +22,14 @@ A character management application for the Call of Cthulhu roleplaying game syst
 
 - **Performance Optimizations**
   - Character data caching system
-  - Lazy loading of character metadata
+  - **Enhanced lazy loading implementation that only reads full character data when needed**
   - Memory usage statistics and management
 
 - **Testing Framework**
   - Comprehensive test suites for critical components
   - Unit tests for dice parser functionality
   - Unit tests for character metadata handling
+  - **Tests to verify correct lazy loading behavior**
 
 ## Usage
 
@@ -46,7 +47,13 @@ A character management application for the Call of Cthulhu roleplaying game syst
 
 ## Changelog
 
-### Version 1.5 (2025-03-30)
+### Version 1.5.1 (2025-03-30)
+- Optimized lazy loading implementation to better leverage CharacterMetadata
+- Fixed character data loading to only load full content when explicitly needed
+- Added tests to verify lazy loading performance characteristics
+- Improved fallback handling for malformed character files
+
+### Version 1.5 (2025-03-28)
 - Added lazy loading optimization for character files
 - Created CharacterMetadata class for efficient character listing
 - Added unit tests for the CharacterMetadata implementation

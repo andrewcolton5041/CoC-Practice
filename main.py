@@ -429,7 +429,7 @@ def main():
                 # Display list of available characters with basic info
                 print("\n--- Available Characters ---")
                 for i, metadata in enumerate(character_metadata, 1):
-                    # Show basic metadata information
+                    # Only use metadata for display without loading full character data
                     print(f"{i}. {metadata.name} - {metadata.occupation} ({metadata.nationality})")
 
                 # Add option to return to main menu
@@ -448,12 +448,16 @@ def main():
 
                 # Handle valid character selection
                 if 1 <= selection <= len(character_metadata):
-                    # Now load the full character data only when selected
+                    # Only load the full character data when explicitly viewing a character
                     selected_metadata = character_metadata[selection - 1]
                     try:
+                        print(f"\nLoading character: {selected_metadata.name}...")
+                        # Load full character data from cache or file only at this point
                         character_data = load_character_from_json(selected_metadata.filename, cache)
                         if character_data:  # Check if load was successful
                             display_character(character_data)
+                        else:
+                            print(f"Failed to load full character data for {selected_metadata.name}.")
                     except Exception as e:
                         print(f"Error loading character: {e}")
 
