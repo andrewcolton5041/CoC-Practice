@@ -297,3 +297,20 @@ class RegexFlags:
     """
     IGNORE_CASE = re.I
     VERBOSE = re.X
+
+class TestConstants:
+  """
+  Constants related to testing functionality.
+  """
+  # Test file paths
+  CHARACTER_UTILS_TEST = "tests/test_character_utils.py"
+  DICE_ROLL_TEST = "tests/test_dice_roll.py"
+  COC_RULES_TEST = "tests/test_coc_rules.py"
+  JSON_READER_TEST = "tests/test_json_reader.py"
+  UI_TEST = "tests/test_ui.py"
+
+  # Test output file
+  TEST_RESULTS_FILE = "Test Results.txt"
+
+  # Test command options
+  PYTEST_VERBOSE_FLAG = "-v"

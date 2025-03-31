@@ -1,0 +1,99 @@
+=== Character Utils Test Results ===
+
+============================= test session starts ==============================
+platform linux -- Python 3.11.10, pytest-8.3.4, pluggy-1.5.0 -- /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/runner/workspace
+configfile: pyproject.toml
+collecting ... collected 8 items
+
+tests/test_character_utils.py::test_skill_check_from_skills_successful PASSED [ 12%]
+tests/test_character_utils.py::test_attribute_check_from_attributes_successful PASSED [ 25%]
+tests/test_character_utils.py::test_non_existant_skill_or_attribute_returns_error PASSED [ 37%]
+tests/test_character_utils.py::test_skill_lower_edge_boundary PASSED     [ 50%]
+tests/test_character_utils.py::test_skill_upper_edge_boundary PASSED     [ 62%]
+tests/test_character_utils.py::test_skill_return_format_correct PASSED   [ 75%]
+tests/test_character_utils.py::test_first_char_wins_opposed_check FAILED [ 87%]
+tests/test_character_utils.py::test_first_second_wins_opposed_check FAILED [100%]
+
+=================================== FAILURES ===================================
+______________________ test_first_char_wins_opposed_check ______________________
+
+    def test_first_char_wins_opposed_check():
+        """
+        Test that opposed_check correctly checks the first character wins when the
+        first character has a success and the second has a failure.
+    
+        """
+    
+        #Arrange
+        character1_data = {
+            CharacterSheetKeys.NAME: "A",
+            CharacterSheetKeys.ATTRIBUTES: {
+                "Strength": 60
+            }
+        }
+    
+        character2_data = {
+            CharacterSheetKeys.NAME: "B",
+            CharacterSheetKeys.ATTRIBUTES: {
+                "Strength": 5
+            }
+        }
+    
+        with patch('src.character_utils.roll_dice', return_value = 10):
+            #Act
+            result = opposed_check(character1_data, "Strength", character2_data, "Strength")
+    
+            #Assert
+>           assert result == "A wins the opposed check!"
+E           AssertionError: assert 'A wins the o...etter Margin)' == 'A wins the opposed check!'
+E             
+E             - A wins the opposed check!
+E             + A wins the opposed check! (Better Margin)
+E             ?                          ++++++++++++++++
+
+tests/test_character_utils.py:181: AssertionError
+_____________________ test_first_second_wins_opposed_check _____________________
+
+    def test_first_second_wins_opposed_check():
+        """
+        Test that opposed_check correctly checks the first character wins when the
+        first character has a success and the second has a failure.
+    
+        """
+    
+        #Arrange
+        character1_data = {
+            CharacterSheetKeys.NAME: "A",
+            CharacterSheetKeys.ATTRIBUTES: {
+                "Strength": 5
+            }
+        }
+    
+        character2_data = {
+            CharacterSheetKeys.NAME: "B",
+            CharacterSheetKeys.ATTRIBUTES: {
+                "Strength": 50
+            }
+        }
+    
+        with patch('src.character_utils.success_check', return_value = SuccessLevel.REGULAR_SUCCESS):
+            #Act
+            result = opposed_check(character1_data, "Strength", character2_data, "Strength")
+    
+            #Assert
+>           assert result == "B wins the opposed check!"
+E           AssertionError: assert 'B wins the o...etter Margin)' == 'B wins the opposed check!'
+E             
+E             - B wins the opposed check!
+E             + B wins the opposed check! (Better Margin)
+E             ?                          ++++++++++++++++
+
+tests/test_character_utils.py:242: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_character_utils.py::test_first_char_wins_opposed_check - As...
+FAILED tests/test_character_utils.py::test_first_second_wins_opposed_check - ...
+========================= 2 failed, 6 passed in 0.14s ==========================
+
+✗ Test failed. See details above.
