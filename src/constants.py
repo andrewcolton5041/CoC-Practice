@@ -57,6 +57,7 @@ class RuleConstants:
         HALF_VALUE = 2  # Divider for Hard Success
         FIFTH_VALUE = 5  # Divider for Extreme Success
 
+
     class FumbleBoundaries:
         """
         Boundaries for determining fumble results.
@@ -64,6 +65,7 @@ class RuleConstants:
         FUMBLE_THRESHOLD = 50  # Skill level threshold for different fumble ranges
         FUMBLE_RANGE_LOW = 96  # Minimum roll for fumble when skill <= 50
         FUMBLE_CRITICAL = 100  # Roll value for fumble when skill > 50
+        FUMBLE_RANGE_HIGH = 100  # Maximum roll for fumble
 
 
 class DiceConstants:

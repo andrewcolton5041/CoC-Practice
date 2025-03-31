@@ -26,8 +26,14 @@ def load_character_from_json(filename):
         dict: Dictionary containing the character data
 
     Raises:
-        Various exceptions related to file operations or JSON parsing
+        ValueError: If the file is not a JSON file
+        FileNotFoundError: If the file does not exist
+        json.JSONDecodeError: If the JSON is invalid
     """
+    # Validate file extension
+    if not filename.lower().endswith(FileConstants.JSON_EXTENSION):
+        raise ValueError(f"File must have a {FileConstants.JSON_EXTENSION} extension")
+
     with open(filename, FileConstants.READ_MODE) as f:
         character_data = json.load(f)
     return character_data

@@ -16,7 +16,11 @@ Last Updated: 03/31/2025
 """
 
 import src.dice_roll as dr
-from src.constants import SuccessLevel, DiceConstants, RuleConstants
+from src.constants import (
+    SuccessLevel, 
+    DiceConstants, 
+    RuleConstants
+)
 
 def improvement_check(stat: int)-> bool:
     """

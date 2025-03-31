@@ -13,7 +13,65 @@ import os
 from src.test_runner import test_menu
 from src.json_reader import display_character, load_character_from_json
 from src.constants import UIStrings, FileConstants, ErrorMessages, Defaults
-   
+
+
+def display_main_menu():
+    """
+    Display the main menu options.
+
+    Returns:
+        None
+    """
+    print(UIStrings.MainMenu.TITLE)
+    print(UIStrings.MainMenu.OPTION_VIEW_CHARACTER)
+    print(UIStrings.MainMenu.OPTION_RUN_TESTS)
+    print(UIStrings.MainMenu.OPTION_EXIT)
+
+
+def run_character_view(character_files):
+    """
+    Run the character viewing process.
+
+    Args:
+        character_files (list): List of available character JSON files
+
+    Returns:
+        dict or None: The loaded character data or None if no character selected
+    """
+    # Display list of available characters
+    print(UIStrings.CharacterViewer.TITLE)
+    for i, filename in enumerate(character_files, 1):
+        # Format the name nicely by removing the file extension
+        name = filename.replace(FileConstants.JSON_EXTENSION, Defaults.EMPTY_STRING).capitalize()
+        print(UIStrings.CharacterViewer.character_option(i, name))
+
+    # Add option to return to main menu
+    print(UIStrings.CharacterViewer.return_option(len(character_files) + 1))
+
+    # Let user select a character
+    while True:
+        try:
+            selection = int(input(UIStrings.CharacterViewer.selection_prompt(len(character_files) + 1)))
+
+            # Handle valid character selection
+            if 1 <= selection <= len(character_files):
+                # Load and display the selected character
+                filename = os.path.join(UIStrings.CharacterViewer.CHARACTERS_DIR, 
+                                      character_files[selection - 1])
+                character_data = load_character_from_json(filename)
+                display_character(character_data)
+
+                # Wait for user to press Enter before returning to menu
+                input(UIStrings.CharacterViewer.CONTINUE_PROMPT)
+                return character_data
+            # Handle return to main menu
+            elif selection == len(character_files) + 1:
+                return None
+            else:
+                print(UIStrings.MainMenu.INVALID_CHOICE)
+        except ValueError:
+            print(ErrorMessages.INVALID_CHOICE)
+
 
 def menu():
     """
@@ -24,71 +82,44 @@ def menu():
     """
     while True:
         # Display main menu
-        print(UIStrings.MainMenu.TITLE)
-        print(UIStrings.MainMenu.OPTION_VIEW_CHARACTER)
-        print(UIStrings.MainMenu.OPTION_RUN_TESTS)
-        print(UIStrings.MainMenu.OPTION_EXIT)
+        display_main_menu()
 
         # Get user choice
-        choice = input(UIStrings.MainMenu.PROMPT)
+        try:
+            choice = input(UIStrings.MainMenu.PROMPT)
 
-        if choice == "1":  # View Character option
-            # Try to list character files from the characters directory
-            character_files = []
-            try:
-                character_files = [f for f in os.listdir(UIStrings.CharacterViewer.CHARACTERS_DIR) 
-                                if f.endswith(FileConstants.JSON_EXTENSION)]
-            except FileNotFoundError:
-                print(ErrorMessages.CHARACTER_FILE_NOT_FOUND)
-                continue
-
-            # Check if any character files were found
-            if not character_files:
-                print(ErrorMessages.NO_CHARACTER_FILES)
-                continue
-
-            # Display list of available characters
-            print(UIStrings.CharacterViewer.TITLE)
-            for i, filename in enumerate(character_files, 1):
-                # Format the name nicely by removing the file extension
-                name = filename.replace(FileConstants.JSON_EXTENSION, Defaults.EMPTY_STRING).capitalize()
-                print(UIStrings.CharacterViewer.character_option(i, name))
-
-            # Add option to return to main menu
-            print(UIStrings.CharacterViewer.return_option(len(character_files) + 1))
-
-            # Let user select a character
-            while True:
+            if choice == "1":  # View Character option
+                # Try to list character files from the characters directory
+                character_files = []
                 try:
-                    selection = int(input(UIStrings.CharacterViewer.selection_prompt(len(character_files) + 1)))
+                    character_files = [f for f in os.listdir(UIStrings.CharacterViewer.CHARACTERS_DIR) 
+                                    if f.endswith(FileConstants.JSON_EXTENSION)]
+                except FileNotFoundError:
+                    print(ErrorMessages.CHARACTER_FILE_NOT_FOUND)
+                    continue
 
-                    # Handle valid character selection
-                    if 1 <= selection <= len(character_files):
-                        # Load and display the selected character
-                        filename = os.path.join(UIStrings.CharacterViewer.CHARACTERS_DIR, 
-                                              character_files[selection - 1])
-                        character_data = load_character_from_json(filename)
-                        display_character(character_data)
+                # Check if any character files were found
+                if not character_files:
+                    print(ErrorMessages.NO_CHARACTER_FILES)
+                    continue
 
-                        # Wait for user to press Enter before returning to menu
-                        input(UIStrings.CharacterViewer.CONTINUE_PROMPT)
-                        break
-                    # Handle return to main menu
-                    elif selection == len(character_files) + 1:
-                        break
-                    else:
-                        print(UIStrings.MainMenu.INVALID_CHOICE)
-                except ValueError:
-                    print(ErrorMessages.INVALID_CHOICE)
-        elif choice == "2":
-            test_menu()
+                # Run character view process
+                run_character_view(character_files)
 
-            
-        elif choice == "3":  # Exit option
-            # Exit the application
-            print(UIStrings.MainMenu.EXIT_MESSAGE)
-            break
+            elif choice == "2":
+                # Run tests
+                test_menu()
+            elif choice == "3":  # Exit option
+                # Exit the application
+                print(UIStrings.MainMenu.EXIT_MESSAGE)
+                break
+            else:
+                # Handle invalid main menu choice
+                print(UIStrings.MainMenu.INVALID_CHOICE)
 
-        else:
-            # Handle invalid main menu choice
-            print(UIStrings.MainMenu.INVALID_CHOICE)
+        except ValueError:
+            print(ErrorMessages.INVALID_CHOICE)
+
+
+if __name__ == "__main__":
+    menu()

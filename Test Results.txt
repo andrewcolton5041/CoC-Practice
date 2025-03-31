@@ -1,129 +1,302 @@
-=== CoC Rules Test Results ===
+=== UI Test Results ===
 
 ============================= test session starts ==============================
 platform linux -- Python 3.11.10, pytest-8.3.4, pluggy-1.5.0 -- /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3
 cachedir: .pytest_cache
 rootdir: /home/runner/workspace
 configfile: pyproject.toml
-collecting ... collected 17 items
+collecting ... collected 6 items
 
-tests/test_coc_rules.py::test_extreme_success PASSED                     [  5%]
-tests/test_coc_rules.py::test_hard_success PASSED                        [ 11%]
-tests/test_coc_rules.py::test_regular_success PASSED                     [ 17%]
-tests/test_coc_rules.py::test_failure PASSED                             [ 23%]
-tests/test_coc_rules.py::test_fumble_low_skill FAILED                    [ 29%]
-tests/test_coc_rules.py::test_fumble_high_skill FAILED                   [ 35%]
-tests/test_coc_rules.py::test_high_skill_not_fumble FAILED               [ 41%]
-tests/test_coc_rules.py::test_exact_skill_roll PASSED                    [ 47%]
-tests/test_coc_rules.py::test_exact_half_skill_roll FAILED               [ 52%]
-tests/test_coc_rules.py::test_exact_fifth_skill_roll FAILED              [ 58%]
-tests/test_coc_rules.py::test_min_skill PASSED                           [ 64%]
-tests/test_coc_rules.py::test_max_skill FAILED                           [ 70%]
-tests/test_coc_rules.py::test_improvement_successful PASSED              [ 76%]
-tests/test_coc_rules.py::test_improvement_failed PASSED                  [ 82%]
-tests/test_coc_rules.py::test_improvement_equal_to_stat PASSED           [ 88%]
-tests/test_coc_rules.py::test_improvement_low_stat PASSED                [ 94%]
-tests/test_coc_rules.py::test_improvement_high_stat PASSED               [100%]
+tests/test_ui.py::test_display_main_menu PASSED                          [ 16%]
+tests/test_ui.py::test_run_character_view FAILED                         [ 33%]
+tests/test_ui.py::test_run_character_view_return_to_menu PASSED          [ 50%]
+tests/test_ui.py::test_menu_flow FAILED                                  [ 66%]
+tests/test_ui.py::test_menu_test_option_flow FAILED                      [ 83%]
+tests/test_ui.py::test_menu_invalid_choice FAILED                        [100%]
 
 =================================== FAILURES ===================================
-____________________________ test_fumble_low_skill _____________________________
+___________________________ test_run_character_view ____________________________
 
-    def test_fumble_low_skill():
+    def test_run_character_view():
         """
-        Test that success_check correctly identifies fumble for skills <= 50
-        when the roll is 96-100.
+        Test the character view process.
         """
-        # Arrange
->       skill = RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD  # 50
-E       NameError: name 'RuleConstants' is not defined
-
-tests/test_coc_rules.py:104: NameError
-____________________________ test_fumble_high_skill ____________________________
-
-    def test_fumble_high_skill():
-        """
-        Test that success_check correctly identifies fumble for skills > 50
-        when the roll is exactly 100.
-        """
-        # Arrange
->       skill = RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD + 10  # 60
-E       NameError: name 'RuleConstants' is not defined
-
-tests/test_coc_rules.py:121: NameError
-__________________________ test_high_skill_not_fumble __________________________
-
-    def test_high_skill_not_fumble():
-        """
-        Test that success_check correctly does not identify rolls of 96-99 as fumbles
-        for skills > 50.
-        """
-        # Arrange
->       skill = RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD + 10  # 60
-E       NameError: name 'RuleConstants' is not defined
-
-tests/test_coc_rules.py:138: NameError
-__________________________ test_exact_half_skill_roll __________________________
-
-    def test_exact_half_skill_roll():
-        """
-        Test that success_check correctly identifies hard success
-        when the roll is exactly equal to half the skill value.
-        """
-        # Arrange
-        skill = TestConstants.SKILL_HARD_THRESHOLD
-        expected_result = SuccessLevel.HARD_SUCCESS
+        # Prepare mock character files
+        mock_characters = ['eleanor.json', 'jennifer.json']
     
-        # Act
->       with patch('src.dice_roll.roll_dice', return_value=skill // RuleConstants.SkillDivisors.HALF_VALUE):
-E       NameError: name 'RuleConstants' is not defined
-
-tests/test_coc_rules.py:176: NameError
-_________________________ test_exact_fifth_skill_roll __________________________
-
-    def test_exact_fifth_skill_roll():
-        """
-        Test that success_check correctly identifies extreme success
-        when the roll is exactly equal to one fifth of the skill value.
-        """
-        # Arrange
-        skill = TestConstants.SKILL_EXTREME_THRESHOLD
-        expected_result = SuccessLevel.EXTREME_SUCCESS
+        # Patch the individual methods separately to capture their calls
+        with patch('os.path.join', return_value='characters/eleanor.json') as mock_path_join, \
+             patch('builtins.input', side_effect=['1', '']), \
+             patch('src.json_reader.load_character_from_json') as mock_load, \
+             patch('src.json_reader.display_character') as mock_display:
     
-        # Act
->       with patch('src.dice_roll.roll_dice', return_value=skill // RuleConstants.SkillDivisors.FIFTH_VALUE):
-E       NameError: name 'RuleConstants' is not defined
-
-tests/test_coc_rules.py:193: NameError
-________________________________ test_max_skill ________________________________
-
-    def test_max_skill():
-        """
-        Test that success_check handles the maximum skill value (100) correctly.
-        Everything except 100 should be a success with skill 100.
-        """
-        # Arrange
-        skill = TestConstants.MAX_SKILL
+            # Setup mock data for character loading
+            expected_data = {
+                'name': 'Eleanor Butler',
+                'age': 39,
+                'occupation': 'History Professor'
+            }
+            mock_load.return_value = expected_data
     
-        # Act & Assert for roll 99 (should be regular success)
-        with patch('src.dice_roll.roll_dice', return_value=99):
-            result = success_check(skill)
-            assert result == SuccessLevel.REGULAR_SUCCESS
+            # Call the character view function
+            result = run_character_view(mock_characters)
     
-        # Act & Assert for roll 100 (should be fumble)
-        with patch('src.dice_roll.roll_dice', return_value=100):
-            result = success_check(skill)
->           assert result == SuccessLevel.FUMBLE
-E           AssertionError: assert <SuccessLevel.REGULAR_SUCCESS: 'Regular Success'> == <SuccessLevel.FUMBLE: 'Fumble'>
-E            +  where <SuccessLevel.FUMBLE: 'Fumble'> = SuccessLevel.FUMBLE
+            # Verify specific method calls
+            mock_path_join.assert_called_with(UIStrings.CharacterViewer.CHARACTERS_DIR, 'eleanor.json')
+>           mock_load.assert_called_with('characters/eleanor.json')
 
-tests/test_coc_rules.py:233: AssertionError
+tests/test_ui.py:75: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <MagicMock name='load_character_from_json' id='139844082391952'>
+args = ('characters/eleanor.json',), kwargs = {}
+expected = "load_character_from_json('characters/eleanor.json')"
+actual = 'not called.'
+error_message = "expected call not found.\nExpected: load_character_from_json('characters/eleanor.json')\n  Actual: not called."
+
+    def assert_called_with(self, /, *args, **kwargs):
+        """assert that the last call was made with the specified arguments.
+    
+        Raises an AssertionError if the args and keyword args passed in are
+        different to the last call to the mock."""
+        if self.call_args is None:
+            expected = self._format_mock_call_signature(args, kwargs)
+            actual = 'not called.'
+            error_message = ('expected call not found.\nExpected: %s\n  Actual: %s'
+                    % (expected, actual))
+>           raise AssertionError(error_message)
+E           AssertionError: expected call not found.
+E           Expected: load_character_from_json('characters/eleanor.json')
+E             Actual: not called.
+
+/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:930: AssertionError
+----------------------------- Captured stdout call -----------------------------
+
+=== Character Viewer ===
+1. Eleanor
+2. Jennifer
+3. Return to Main Menu
+==================================================
+
+==================================================
+Name: Professor Eleanor Butler
+Age: 39
+Occupation: History Professor
+Nationality: American
+
+--- Attributes ---
+Strength: 55
+Constitution: 65
+Size: 65
+Dexterity: 65
+Intelligence: 65
+Appearance: 35
+Power: 65
+Education: 90
+Luck: 0
+Sanity: 65
+Magic: 13
+HP: 13
+Movement: 8
+Damage Bonus: None
+Build: 0
+
+--- Skills ---
+Archaeology: 30
+Climb: 30
+Credit Rating: 35
+Fast Talk: 40
+History: 75
+Jump: 35
+Language (English): 90
+Language (German): 50
+Language (Greek): 35
+Language (Spanish): 40
+Library Use: 45
+Listen: 40
+Mechanical Repair: 15
+Natural World: 20
+Occult: 20
+Persuade: 40
+Psychology: 30
+Spot Hidden: 30
+Stealth: 35
+Swim: 40
+Brawl: 60
+Dodge: 35
+
+--- Weapons ---
+Brawl - Skill: 60 - Damage: 1D3
+
+--- Backstory ---
+Eleanor grew up on a farm in the Midwest, yearning for a break from the monotony of her life. When faced with the prospect of marrying a local boy, she resolved to escape the future that destiny had in store for her and ran away, jumping a train to New York. Working what jobs she could find, she still found time for her favorite pastime, reading history books in the New York Public Library; a lifelong passion that drove her into getting an education and becoming a historian. In academic life, she has yet to make a mark, a fact that often plays upon her mind, as she sees others finding renown while her work goes unrecognized.
+==================================================
+________________________________ test_menu_flow ________________________________
+
+    def test_menu_flow():
+        """
+        Test the overall menu flow when viewing characters.
+        """
+        with patch('os.listdir', return_value=['eleanor.json', 'jennifer.json']), \
+             patch('builtins.input', side_effect=['1', '1', '', '3']) as mock_input, \
+             patch('os.path.join', return_value='characters/eleanor.json'), \
+             patch('src.json_reader.load_character_from_json') as mock_load, \
+             patch('src.json_reader.display_character') as mock_display, \
+             patch('builtins.print') as mock_print, \
+             patch('src.test_runner.test_menu') as mock_test_menu:
+    
+            # Setup mock character data
+            expected_data = {
+                'name': 'Eleanor Butler',
+                'age': 39,
+                'occupation': 'History Professor'
+            }
+            mock_load.return_value = expected_data
+    
+            # Call the menu function
+            menu()
+    
+            # Verify the expected interactions
+            mock_input.assert_has_calls([
+                call(UIStrings.MainMenu.PROMPT),
+                call(UIStrings.CharacterViewer.selection_prompt(3)),
+                call(UIStrings.CharacterViewer.CONTINUE_PROMPT),
+                call(UIStrings.MainMenu.PROMPT)
+            ])
+>           mock_load.assert_called_once()
+
+tests/test_ui.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <MagicMock name='load_character_from_json' id='139844080770704'>
+
+    def assert_called_once(self):
+        """assert that the mock was called only once.
+        """
+        if not self.call_count == 1:
+            msg = ("Expected '%s' to have been called once. Called %s times.%s"
+                   % (self._mock_name or 'mock',
+                      self.call_count,
+                      self._calls_repr()))
+>           raise AssertionError(msg)
+E           AssertionError: Expected 'load_character_from_json' to have been called once. Called 0 times.
+
+/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:918: AssertionError
+__________________________ test_menu_test_option_flow __________________________
+
+    def test_menu_test_option_flow():
+        """
+        Test the test menu option flow.
+        """
+        with patch('builtins.input', side_effect=['2', '7', '3']) as mock_input, \
+             patch('os.listdir', return_value=[]), \
+             patch('src.test_runner.test_menu') as mock_test_menu, \
+             patch('builtins.print') as mock_print:
+    
+            # Call the menu function
+            menu()
+    
+            # Verify test menu was called and exit message printed
+            mock_input.assert_has_calls([
+                call(UIStrings.MainMenu.PROMPT),
+                call(UIStrings.TestMenu.PROMPT),
+                call(UIStrings.MainMenu.PROMPT)
+            ])
+>           mock_test_menu.assert_called_once()
+
+tests/test_ui.py:150: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <MagicMock name='test_menu' id='139844082398416'>
+
+    def assert_called_once(self):
+        """assert that the mock was called only once.
+        """
+        if not self.call_count == 1:
+            msg = ("Expected '%s' to have been called once. Called %s times.%s"
+                   % (self._mock_name or 'mock',
+                      self.call_count,
+                      self._calls_repr()))
+>           raise AssertionError(msg)
+E           AssertionError: Expected 'test_menu' to have been called once. Called 0 times.
+
+/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:918: AssertionError
+___________________________ test_menu_invalid_choice ___________________________
+
+    def test_menu_invalid_choice():
+        """
+        Test handling of invalid menu choices.
+        """
+        with patch('builtins.input', side_effect=['4', '3']) as mock_input, \
+             patch('os.listdir', return_value=[]), \
+             patch('builtins.print') as mock_print:
+    
+            # Call the menu function
+            menu()
+    
+            # Verify invalid choice and exit messages
+            mock_input.assert_has_calls([
+                call(UIStrings.MainMenu.PROMPT),
+                call(UIStrings.MainMenu.PROMPT)
+            ])
+>           mock_print.assert_has_calls([
+                call(UIStrings.MainMenu.INVALID_CHOICE),
+                call(UIStrings.MainMenu.EXIT_MESSAGE)
+            ])
+
+tests/test_ui.py:169: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <MagicMock name='print' id='139844079982416'>
+calls = [call('Invalid selection.'), call('Exiting the Call of Cthulhu application.')]
+any_order = False
+
+    def assert_has_calls(self, calls, any_order=False):
+        """assert the mock has been called with the specified calls.
+        The `mock_calls` list is checked for the calls.
+    
+        If `any_order` is False (the default) then the calls must be
+        sequential. There can be extra calls before or after the
+        specified calls.
+    
+        If `any_order` is True then the calls can be in any order, but
+        they must all appear in `mock_calls`."""
+        expected = [self._call_matcher(c) for c in calls]
+        cause = next((e for e in expected if isinstance(e, Exception)), None)
+        all_calls = _CallList(self._call_matcher(c) for c in self.mock_calls)
+        if not any_order:
+            if expected not in all_calls:
+                if cause is None:
+                    problem = 'Calls not found.'
+                else:
+                    problem = ('Error processing expected calls.\n'
+                               'Errors: {}').format(
+                                   [e if isinstance(e, Exception) else None
+                                    for e in expected])
+>               raise AssertionError(
+                    f'{problem}\n'
+                    f'Expected: {_CallList(calls)}'
+                    f'{self._calls_repr(prefix="  Actual").rstrip(".")}'
+                ) from cause
+E               AssertionError: Calls not found.
+E               Expected: [call('Invalid selection.'), call('Exiting the Call of Cthulhu application.')]
+E                 Actual: [call('\n=== Call of Cthulhu: Masks of Nyarlathotep ==='),
+E                call('1. View Premade Character'),
+E                call('2. Run Tests'),
+E                call('3. Exit'),
+E                call('Invalid selection.'),
+E                call('\n=== Call of Cthulhu: Masks of Nyarlathotep ==='),
+E                call('1. View Premade Character'),
+E                call('2. Run Tests'),
+E                call('3. Exit'),
+E                call('Exiting the Call of Cthulhu application.')]
+
+/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:976: AssertionError
 =========================== short test summary info ============================
-FAILED tests/test_coc_rules.py::test_fumble_low_skill - NameError: name 'Rule...
-FAILED tests/test_coc_rules.py::test_fumble_high_skill - NameError: name 'Rul...
-FAILED tests/test_coc_rules.py::test_high_skill_not_fumble - NameError: name ...
-FAILED tests/test_coc_rules.py::test_exact_half_skill_roll - NameError: name ...
-FAILED tests/test_coc_rules.py::test_exact_fifth_skill_roll - NameError: name...
-FAILED tests/test_coc_rules.py::test_max_skill - AssertionError: assert <Succ...
-========================= 6 failed, 11 passed in 0.12s =========================
+FAILED tests/test_ui.py::test_run_character_view - AssertionError: expected c...
+FAILED tests/test_ui.py::test_menu_flow - AssertionError: Expected 'load_char...
+FAILED tests/test_ui.py::test_menu_test_option_flow - AssertionError: Expecte...
+FAILED tests/test_ui.py::test_menu_invalid_choice - AssertionError: Calls not...
+========================= 4 failed, 2 passed in 0.25s ==========================
 
 ✗ Test failed. See details above.

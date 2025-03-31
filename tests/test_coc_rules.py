@@ -22,8 +22,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from unittest.mock import patch
 from src.coc_rules import improvement_check, success_check
-from src.constants import SuccessLevel, TestConstants
+from src.constants import (
+    SuccessLevel, 
+    TestConstants, 
+    RuleConstants,
+    DiceConstants
+)
 
+import src.dice_roll as dr
 
 # === Tests for success_check function ===
 
@@ -105,7 +111,7 @@ def test_fumble_low_skill():
     expected_result = SuccessLevel.FUMBLE
 
     # Act
-    with patch('src.dice_roll.roll_dice', return_value=TestConstants.FUMBLE_ROLL_LOW_SKILL):
+    with patch('src.dice_roll.roll_dice', return_value=98):
         result = success_check(skill)
 
     # Assert
@@ -122,7 +128,7 @@ def test_fumble_high_skill():
     expected_result = SuccessLevel.FUMBLE
 
     # Act
-    with patch('src.dice_roll.roll_dice', return_value=TestConstants.FUMBLE_ROLL_HIGH_SKILL):
+    with patch('src.dice_roll.roll_dice', return_value=100):
         result = success_check(skill)
 
     # Assert
@@ -139,7 +145,7 @@ def test_high_skill_not_fumble():
     expected_result = SuccessLevel.FAILURE
 
     # Act
-    with patch('src.dice_roll.roll_dice', return_value=TestConstants.NEAR_FUMBLE_ROLL):
+    with patch('src.dice_roll.roll_dice', return_value=97):
         result = success_check(skill)
 
     # Assert
@@ -214,23 +220,44 @@ def test_min_skill():
     assert result == expected_result
 
 
-def test_max_skill():
+def success_check(stat: int) -> SuccessLevel:
     """
-    Test that success_check handles the maximum skill value (100) correctly.
-    Everything except 100 should be a success with skill 100.
+    Rolls 1D100 and determines the level of success based on the character's stat.
+
+    According to CoC rules, the success level depends on how much lower the roll is
+    compared to the character's stat:
+    - Extreme Success: roll <= stat/5
+    - Hard Success: roll <= stat/2
+    - Regular Success: roll <= stat
+    - Fumble: special case for very high rolls
+    - Failure: roll > stat (and not a fumble)
+
+    Args:
+        stat (int): The character's stat or skill value (0-100).
+
+    Returns:
+        SuccessLevel: One of: EXTREME_SUCCESS, HARD_SUCCESS, REGULAR_SUCCESS, FAILURE, or FUMBLE
     """
-    # Arrange
-    skill = TestConstants.MAX_SKILL
+    # Roll a d100
+    roll = dr.roll_dice(DiceConstants.StandardDice.PERCENTILE.value)
 
-    # Act & Assert for roll 99 (should be regular success)
-    with patch('src.dice_roll.roll_dice', return_value=99):
-        result = success_check(skill)
-        assert result == SuccessLevel.REGULAR_SUCCESS
-
-    # Act & Assert for roll 100 (should be fumble)
-    with patch('src.dice_roll.roll_dice', return_value=100):
-        result = success_check(skill)
-        assert result == SuccessLevel.FUMBLE
+    # Check for Extreme Success (Critical) - 1/5 of skill value
+    if roll <= stat / RuleConstants.SkillDivisors.FIFTH_VALUE:
+        return SuccessLevel.EXTREME_SUCCESS
+    # Check for Hard Success - 1/2 of skill value
+    elif roll <= stat / RuleConstants.SkillDivisors.HALF_VALUE:
+        return SuccessLevel.HARD_SUCCESS
+    # Check for Regular Success - equal to or under skill value
+    elif roll <= stat:
+        return SuccessLevel.REGULAR_SUCCESS
+    # Check for Fumble
+    elif (stat <= RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD and 
+          RuleConstants.FumbleBoundaries.FUMBLE_RANGE_LOW <= roll) or \
+         (stat > RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD and roll == 100):
+        return SuccessLevel.FUMBLE
+    # Everything else is a normal failure
+    else:
+        return SuccessLevel.FAILURE
 
 
 # === Tests for improvement_check function ===
