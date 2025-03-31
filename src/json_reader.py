@@ -8,6 +8,7 @@ Last Updated: 3/31/2025
 """
 
 import json
+from src.constants import FileFlags, JSONReaderConst, CharacterSheetKeys, Extra
 
 def load_character_from_json(filename):
     """
@@ -22,7 +23,7 @@ def load_character_from_json(filename):
     Raises:
         Various exceptions related to file operations or JSON parsing
     """
-    with open(filename, 'r') as f:
+    with open(filename, FileFlags.READ_FLAG) as f:
         character_data = json.load(f)
     return character_data
 
@@ -41,33 +42,33 @@ def display_character(character_data):
         character_data (dict): Dictionary containing the character data
     """
     # Print divider line and basic character information
-    print("\n" + "="*50)
-    print(f"Name: {character_data['name']}")
-    print(f"Age: {character_data['age']}")
-    print(f"Occupation: {character_data.get('occupation', 'Unknown')}")
-    print(f"Nationality: {character_data.get('nationality', 'Unknown')}")
+    print(JSONReaderConst.TOP_DIVIDER)
+    print(JSONReaderConst.character_name(character_data[CharacterSheetKeys.NAME]))
+    print(JSONReaderConst.character_age(character_data[CharacterSheetKeys.AGE]))
+    print(JSONReaderConst.character_occupation(character_data.get(CharacterSheetKeys.OCCUPATION, Extra.UNKNOWN)))
+    print(JSONReaderConst.character_nationality(character_data.get(CharacterSheetKeys.NATIONALITY, Extra.UNKNOWN)))
 
     # Print character attributes
-    print("\n--- Attributes ---")
-    for attr, value in character_data['attributes'].items():
-        print(f"{attr}: {value}")
+    print(JSONReaderConst.ATTRIBUTES_DIVIDER)
+    for attr, value in character_data[CharacterSheetKeys.ATTRIBUTES].items():
+        print(JSONReaderConst.character_sheet_att_ski_printer(attr,value))
 
     # Print character skills if available
-    if 'skills' in character_data:
-        print("\n--- Skills ---")
-        for skill, value in character_data['skills'].items():
-            print(f"{skill}: {value}")
+    if CharacterSheetKeys.SKILLS in character_data:
+        print(JSONReaderConst.SKILLS_DIVIDER)
+        for skill, value in character_data[CharacterSheetKeys.SKILLS].items():
+            print(JSONReaderConst.character_sheet_att_ski_printer(skill,value))
 
     # Print character weapons if available
-    if 'weapons' in character_data:
-        print("\n--- Weapons ---")
-        for weapon in character_data['weapons']:
-            print(f"{weapon['name']} - Skill: {weapon['skill']} - Damage: {weapon['damage']}")
+    if CharacterSheetKeys.WEAPONS in character_data:
+        print(JSONReaderConst.WEAPONS_DIVIDER)
+        for weapon in character_data[CharacterSheetKeys.WEAPONS]:
+            print(JSONReaderConst.character_sheet_weapons(weapon[CharacterSheetKeys.NAME],weapon[CharacterSheetKeys.SKILLS], weapon[CharacterSheetKeys.DAMAGE]))
 
     # Print character backstory if available
-    if 'backstory' in character_data:
-        print("\n--- Backstory ---")
-        print(character_data['backstory'])
+    if CharacterSheetKeys.BACKSTORY in character_data:
+        print(JSONReaderConst.BACKSTORY_DIVIDER)
+        print(character_data[CharacterSheetKeys.BACKSTORY])
 
     # Print closing divider
-    print("="*50 + "\n")
+    print(JSONReaderConst.BOTTOM_DIVIDER)

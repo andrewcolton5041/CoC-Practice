@@ -1,71 +1,69 @@
 import os
 from src.json_reader import display_character, load_character_from_json
+from src.constants import MenuStrings, FileExtensions, ErrorMessages, Extra
 
 def menu():
   while True:
     # Display main menu
-    print("\n=== Call of Cthulhu Character Viewer ===")
-    print("1. View Premade Characters")
-    print("2. Exit")
+    print(MenuStrings.MAIN_MENU_TITLE)
+    print(MenuStrings.MAIN_MENU_OPTION_1)
+    print(MenuStrings.MAIN_MENU_OPTION_2)
 
     # Get user choice
-    choice = input("\nEnter your choice (1-2): ")
+    choice = input(MenuStrings.MAIN_MENU_CHOICE_PROMPT)
 
-    if choice == '1':
+    if choice == MenuStrings.ChoiceNumEnum.OPTION_1.value:
         # Try to list character files from the characters directory
         character_files = []
         try:
-            character_files = [f for f in os.listdir('characters') if f.endswith('.json')]
+            character_files = [f for f in os.listdir(MenuStrings.CharacterViewerStrings.CHARACTERS) if f.endswith(FileExtensions.JSON_FILE.value)]
         except FileNotFoundError:
-            print("Characters directory not found!")
+            print(ErrorMessages.CHARACTER_FILE_NOT_FOUND)
             continue
 
         # Check if any character files were found
         if not character_files:
-            print("No character files found!")
+            print(ErrorMessages.NO_CHARACTER_FILES)
             continue
 
         # Display list of available characters
-        print("\n--- Available Characters ---")
-        for i, filename in enumerate(character_files, 1):
+        print(MenuStrings.CharacterViewerStrings.CHARACTER_VIEWER_TITLE)
+        for i, filename in enumerate(character_files, MenuStrings.STARTING_NUMBER):
             # Format the name nicely by removing the file extension
-            name = filename.replace('.json', '').capitalize()
-            print(f"{i}. {name}")
+            name = filename.replace(FileExtensions.JSON_FILE.value, Extra.NO_CHARACTER).capitalize()
+            print(MenuStrings.CharacterViewerStrings.available_characters(i, name))
 
         # Add option to return to main menu
-        print(f"{len(character_files) + 1}. Back to Main Menu")
+        print(MenuStrings.CharacterViewerStrings.character_to_main(len(character_files) + MenuStrings.STARTING_NUMBER))
 
         # Let user select a character
         while True:
             try:
-                selection = int(input(f"\nSelect a character (1-{len(character_files) + 1}): "))
+                selection = int(input(MenuStrings.CharacterViewerStrings.character_viewer_prompt(len(character_files) + MenuStrings.STARTING_NUMBER)))
 
                 # Handle valid character selection
-                if 1 <= selection <= len(character_files):
+                if MenuStrings.STARTING_NUMBER <= selection <= len(character_files):
                     # Load and display the selected character
-                    filename = os.path.join('characters', character_files[selection - 1])
+                    filename = os.path.join(MenuStrings.CharacterViewerStrings.CHARACTERS, character_files[selection - MenuStrings.STARTING_NUMBER])
                     character_data = load_character_from_json(filename)
                     display_character(character_data)
 
                     # Wait for user to press Enter before returning to menu
-                    input("Press Enter to continue...")
+                    input(MenuStrings.CharacterViewerStrings.INPUT_ENTER_KEY)
                     break
                 # Handle return to main menu
-                elif selection == len(character_files) + 1:
+                elif selection == len(character_files) + MenuStrings.STARTING_NUMBER:
                     break
                 else:
-                    print("Invalid selection.")
+                    print(MenuStrings.INVALID_CHOICE_ERROR)
             except ValueError:
-                print("Please enter a valid number.")
+                print(ErrorMessages.INVALID_CHOICE_REDO)
 
-    elif choice == '2':
-        print("Exiting...")
-        break
-    elif choice == '3':
+    elif choice == MenuStrings.ChoiceNumEnum.OPTION_2.value:
         # Exit the application
-        print("Exiting program. Goodbye!")
+        print(MenuStrings.EXIT_MESSAGE)
         break
 
     else:
         # Handle invalid main menu choice
-        print("Invalid choice. Please enter 1 or 2.")
+        print(MenuStrings.INVALID_CHOICE_ERROR)
