@@ -16,7 +16,7 @@ Last Updated: 03/31/2025
 """
 
 import src.dice_roll as dr
-from src.constants import SuccessLevel, Dice, FumbleBoundaries, HalfFifth
+from src.constants import SuccessLevel, DiceConstants, RuleConstants
 
 def improvement_check(stat: int)-> bool:
     """
@@ -31,7 +31,7 @@ def improvement_check(stat: int)-> bool:
     Returns:
         bool: True if the check succeeds (roll > stat), False otherwise.
     """
-    return dr.roll_dice(Dice.BasicDice.PERCENTILE_DIE.value, False) > stat
+    return dr.roll_dice(DiceConstants.StandardDice.PERCENTILE.value, False) > stat
 
 def success_check(stat: int) -> SuccessLevel:
     """
@@ -52,19 +52,19 @@ def success_check(stat: int) -> SuccessLevel:
         str: One of: "Extreme Success", "Hard Success", "Regular Success", "Failure", or "Fumble"
     """
     # Roll a d100
-    roll = dr.roll_dice(Dice.BasicDice.PERCENTILE_DIE.value)
+    roll = dr.roll_dice(DiceConstants.StandardDice.PERCENTILE.value)
 
     # Check for Extreme Success (Critical) - 1/5 of skill value
-    if roll <= stat / HalfFifth.FIFTH_VALUE:
+    if roll <= stat / RuleConstants.SkillDivisors.FIFTH_VALUE:
         return SuccessLevel.EXTREME_SUCCESS
     # Check for Hard Success - 1/2 of skill value
-    elif roll <= stat / HalfFifth.HALF_VALUE:
+    elif roll <= stat / RuleConstants.SkillDivisors.HALF_VALUE:
         return SuccessLevel.HARD_SUCCESS
     # Check for Regular Success - equal to or under skill value
     elif roll <= stat:
         return SuccessLevel.REGULAR_SUCCESS
     # Check for Fumble - 96-100 for skills 50 or less, only 100 for skills over 50
-    elif (stat <= FumbleBoundaries.FUMBLE_REDUCED_CHECK and FumbleBoundaries.FUMBLE_REDUCED_CHECK_MIN <= roll) or (stat > FumbleBoundaries.FUMBLE_REDUCED_CHECK and roll == FumbleBoundaries.FUMBLE_CHECK_MIN):
+    elif (stat <= RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD and RuleConstants.FumbleBoundaries.FUMBLE_RANGE_LOW <= roll) or (stat > RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD and roll == RuleConstants.FumbleBoundaries.FUMBLE_CRITICAL):
         return SuccessLevel.FUMBLE
     # Everything else is a normal failure
     else:

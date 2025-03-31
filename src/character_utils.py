@@ -11,15 +11,23 @@ Major functions include:
 
 These functions implement game mechanics based on Call of Cthulhu 7th edition rules.
 
-Author: Unknown
-Version: 1.0
-Last Updated: Unknown
+Author: Andrew C
+Version: 1.1
+Last Updated: March 31, 2025
 """
 
 from typing import Dict, Tuple, Union
 from src.dice_roll import roll_dice
 from src.coc_rules import success_check
-from src.constants import CharacterSheetKeys, Dice, OtherConstants, SuccessLevel, CharacterUtils, ErrorMessages
+from src.constants import (
+    SuccessLevel,
+    CharacterSheetKeys,
+    DiceConstants,
+    ErrorMessages,
+    CharacterUtils,
+    Defaults
+)
+
 
 def skill_check(character_data: Dict, skill_name: str) -> Tuple[int, SuccessLevel]:
     """
@@ -39,18 +47,25 @@ def skill_check(character_data: Dict, skill_name: str) -> Tuple[int, SuccessLeve
         ValueError: If the specified skill or attribute doesn't exist for the character
     """
     # First, try to locate the skill value in the character data
-    skill_value = OtherConstants.NONE
-    if CharacterSheetKeys.SKILLS in character_data and skill_name in character_data[CharacterSheetKeys.SKILLS]:
-        # Look in skills first
-        skill_value = character_data[CharacterSheetKeys.SKILLS][skill_name]
-    elif skill_name in character_data[CharacterSheetKeys.ATTRIBUTES]:
-        # If not found in skills, check attributes
-        skill_value = character_data[CharacterSheetKeys.ATTRIBUTES][skill_name]
-    else:
-        # If not found in either location, raise an error
-        raise ValueError(f"Skill or attribute '{skill_name}' not found for this character")
+    skill_value = None
 
-    return (roll_dice(Dice.BasicDice.PERCENTILE_DIE.value), success_check(skill_value))
+    # Look in skills first
+    if (CharacterSheetKeys.SKILLS in character_data and 
+            skill_name in character_data[CharacterSheetKeys.SKILLS]):
+        skill_value = character_data[CharacterSheetKeys.SKILLS][skill_name]
+    # If not found in skills, check attributes
+    elif skill_name in character_data[CharacterSheetKeys.ATTRIBUTES]:
+        skill_value = character_data[CharacterSheetKeys.ATTRIBUTES][skill_name]
+    # If not found in either location, raise an error
+    else:
+        raise ValueError(ErrorMessages.skill_not_found(skill_name))
+
+    # Perform the dice roll and determine success level
+    roll_result = roll_dice(DiceConstants.StandardDice.PERCENTILE.value)
+    success_result = success_check(skill_value)
+
+    return (roll_result, success_result)
+
 
 def opposed_check(char1_data: Dict, char1_skill: str, char2_data: Dict, char2_skill: str) -> str:
     """
@@ -88,20 +103,25 @@ def opposed_check(char1_data: Dict, char1_skill: str, char2_data: Dict, char2_sk
 
     # Compare success levels
     if char1_level > char2_level:
-        return CharacterUtils.opposed_check_win(char1_data['name'], False)
+        return CharacterUtils.opposed_check_result(char1_data[CharacterSheetKeys.NAME])
     elif char2_level > char1_level:
-        return CharacterUtils.opposed_check_win(char2_data['name'], False)
+        return CharacterUtils.opposed_check_result(char2_data[CharacterSheetKeys.NAME])
     else:
         # If same success level, compare the margins of success
         char1_margin = get_skill_value(char1_data, char1_skill) - char1_roll
         char2_margin = get_skill_value(char2_data, char2_skill) - char2_roll
 
         if char1_margin > char2_margin:
-            return CharacterUtils.opposed_check_win(char1_data['name'], True)
+            return CharacterUtils.opposed_check_result(
+                char1_data[CharacterSheetKeys.NAME], True
+            )
         elif char2_margin > char1_margin:
-            return CharacterUtils.opposed_check_win(char2_data['name'], True)
+            return CharacterUtils.opposed_check_result(
+                char2_data[CharacterSheetKeys.NAME], True
+            )
         else:
-            return CharacterUtils.OPP_CHECK_TIE
+            return CharacterUtils.TIE_RESULT
+
 
 def get_skill_value(character_data: Dict, skill_name: str) -> int:
     """
@@ -117,12 +137,14 @@ def get_skill_value(character_data: Dict, skill_name: str) -> int:
     Raises:
         ValueError: If the skill or attribute doesn't exist for the character
     """
-    if 'skills' in character_data and skill_name in character_data[CharacterSheetKeys.SKILLS]:
+    if (CharacterSheetKeys.SKILLS in character_data and 
+            skill_name in character_data[CharacterSheetKeys.SKILLS]):
         return character_data[CharacterSheetKeys.SKILLS][skill_name]
     elif skill_name in character_data[CharacterSheetKeys.ATTRIBUTES]:
         return character_data[CharacterSheetKeys.ATTRIBUTES][skill_name]
     else:
-        raise ValueError(ErrorMessages.skill_value_not_found(skill_name))
+        raise ValueError(ErrorMessages.skill_not_found(skill_name))
+
 
 def roll_damage(weapon_data: Dict) -> Union[int, str]:
     """
@@ -136,19 +158,19 @@ def roll_damage(weapon_data: Dict) -> Union[int, str]:
     Returns:
         int or str: The calculated damage result or the damage formula if it can't be calculated
     """
-    
     try:
         # Try to directly roll the damage formula
-        return roll_dice(weapon_data[CharacterSheetKeys.DAMAGE])
+        return roll_dice(weapon_data[CharacterSheetKeys.WEAPON_DAMAGE])
     except ValueError:
         # Handle damage formulas that might involve damage bonus
-        damage_formula = weapon_data[CharacterSheetKeys.DAMAGE]
+        damage_formula = weapon_data[CharacterSheetKeys.WEAPON_DAMAGE]
 
         # Special handling for common damage bonus pattern
-        if '+1D4' in damage_formula:
+        if DiceConstants.DamageModifiers.DB_PLUS_1D4 in damage_formula:
             # Split the formula and roll parts separately
-            base_damage = damage_formula.replace(Dice.DamageBonusDice.ONE_BONUS_DICE, '')
-            bonus_damage = roll_dice(Dice.BasicDice.DFOUR.value)
+            base_damage = damage_formula.replace(
+                DiceConstants.DamageModifiers.DB_PLUS_1D4, '')
+            bonus_damage = roll_dice(DiceConstants.StandardDice.D4.value)
             return roll_dice(base_damage) + bonus_damage
         else:
             # Return the formula string if we can't parse it
