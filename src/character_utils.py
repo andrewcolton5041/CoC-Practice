@@ -150,7 +150,8 @@ def roll_damage(weapon_data: Dict) -> Union[int, str]:
     """
     Calculate damage for a weapon attack based on its damage formula.
 
-    Handles various damage formulas including those with character damage bonuses.
+    Handles various damage formulas including those with addition, subtraction,
+    and character damage bonuses.
 
     Args:
         weapon_data (dict): The weapon dictionary containing the damage formula
@@ -162,14 +163,40 @@ def roll_damage(weapon_data: Dict) -> Union[int, str]:
         # Try to directly roll the damage formula
         return roll_dice(weapon_data[CharacterSheetKeys.WEAPON_DAMAGE])
     except ValueError:
-        # Handle damage formulas that might involve damage bonus
+        # Handle damage formulas that might involve multiple dice expressions
         damage_formula = weapon_data[CharacterSheetKeys.WEAPON_DAMAGE]
 
-        # Special handling for common damage bonus pattern
-        if DiceConstants.DamageModifiers.DB_PLUS_1D4 in damage_formula:
+        # Check for addition pattern (e.g., "1D3+1D4")
+        if "+" in damage_formula:
+            parts = damage_formula.split("+")
+            total_damage = 0
+            try:
+                # Roll each part and sum them up
+                for part in parts:
+                    part = part.strip()  # Remove any whitespace
+                    if part:  # Make sure it's not empty
+                        total_damage += roll_dice(part)
+                return total_damage
+            except ValueError:
+                # If any part can't be rolled, return the original formula
+                return damage_formula
+
+        # Check for subtraction pattern (e.g., "2D6-1D4")
+        elif "-" in damage_formula and not damage_formula.startswith("-"):
+            parts = damage_formula.split("-", 1)  # Split only on the first "-"
+            try:
+                base_damage = roll_dice(parts[0].strip())
+                subtracted_damage = roll_dice(parts[1].strip()) if parts[1].strip() else 0
+                return base_damage - subtracted_damage
+            except ValueError:
+                # If any part can't be rolled, return the original formula
+                return damage_formula
+
+        # Handle specific known damage bonus patterns
+        elif DiceConstants.DamageModifiers.DB_PLUS_1D4 in damage_formula:
             # Split the formula and roll parts separately
             base_damage = damage_formula.replace(
-                DiceConstants.DamageModifiers.DB_PLUS_1D4, '')
+                DiceConstants.DamageModifiers.DB_PLUS_1D4, '').strip()
             bonus_damage = roll_dice(DiceConstants.StandardDice.D4.value)
             return roll_dice(base_damage) + bonus_damage
         else:

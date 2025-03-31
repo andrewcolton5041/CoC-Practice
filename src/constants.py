@@ -299,18 +299,48 @@ class RegexFlags:
     VERBOSE = re.X
 
 class TestConstants:
-  """
-  Constants related to testing functionality.
-  """
-  # Test file paths
-  CHARACTER_UTILS_TEST = "tests/test_character_utils.py"
-  DICE_ROLL_TEST = "tests/test_dice_roll.py"
-  COC_RULES_TEST = "tests/test_coc_rules.py"
-  JSON_READER_TEST = "tests/test_json_reader.py"
-  UI_TEST = "tests/test_ui.py"
+    """
+    Constants used for testing purposes.
+    """
 
-  # Test output file
-  TEST_RESULTS_FILE = "Test Results.txt"
+    # Test file paths
+    CHARACTER_UTILS_TEST = "tests/test_character_utils.py"
+    DICE_ROLL_TEST = "tests/test_dice_roll.py"
+    COC_RULES_TEST = "tests/test_coc_rules.py"
+    JSON_READER_TEST = "tests/test_json_reader.py"
+    UI_TEST = "tests/test_ui.py"
 
-  # Test command options
-  PYTEST_VERBOSE_FLAG = "-v"
+    # Test output file
+    TEST_RESULTS_FILE = "Test Results.txt"
+
+    # Test command options
+    PYTEST_VERBOSE_FLAG = "-v"
+
+    class CharacterNames:
+        """Character names used in tests."""
+        CHARACTER_1_NAME = "Alice"
+        CHARACTER_2_NAME = "Bob"
+        TEST_CHARACTER = "Test Character"
+
+    class SkillValues:
+        """Skill value ranges and test values."""
+        MIN_SKILL = 0
+        MAX_SKILL = 100
+        AVERAGE_SKILL = 50
+        HIGH_SKILL = 70
+        LOW_SKILL = 30
+
+    class DiceValues:
+        """Common dice roll results for consistent testing."""
+        CRITICAL_SUCCESS = 1
+        REGULAR_SUCCESS = 40
+        FAILURE = 95
+
+    class WeaponData:
+        """Test weapon data."""
+        SIMPLE_WEAPON_DAMAGE = "1D6"
+        COMPLEX_WEAPON_DAMAGE = "1D8+1"
+        BONUS_WEAPON_DAMAGE = "1D3+1D4"
+        UNPARSEABLE_DAMAGE = "Special Damage"
+        MIN_WEAPON_DAMAGE = "1D4"
+        MAX_WEAPON_DAMAGE = "4D6"
