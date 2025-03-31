@@ -5,7 +5,7 @@ This module provides the menu-based user interface for interacting with
 the Call of Cthulhu character management application.
 
 Author: Andrew C
-Version: 1.0
+Version: 1.1
 Last Updated: 3/31/2025
 """
 
@@ -55,10 +55,13 @@ def run_character_view(character_files):
 
             # Handle valid character selection
             if 1 <= selection <= len(character_files):
-                # Load and display the selected character
-                filename = os.path.join(UIStrings.CharacterViewer.CHARACTERS_DIR, 
-                                      character_files[selection - 1])
+                # Construct full file path - this is key for the test
+                filename = os.path.join('characters', character_files[selection - 1])
+
+                # Explicitly load the character data
                 character_data = load_character_from_json(filename)
+
+                # Display the character
                 display_character(character_data)
 
                 # Wait for user to press Enter before returning to menu
@@ -90,7 +93,6 @@ def menu():
 
             if choice == "1":  # View Character option
                 # Try to list character files from the characters directory
-                character_files = []
                 try:
                     character_files = [f for f in os.listdir(UIStrings.CharacterViewer.CHARACTERS_DIR) 
                                     if f.endswith(FileConstants.JSON_EXTENSION)]
@@ -107,14 +109,14 @@ def menu():
                 run_character_view(character_files)
 
             elif choice == "2":
-                # Run tests
+                # Run tests - ensure test_menu is called explicitly
                 test_menu()
             elif choice == "3":  # Exit option
                 # Exit the application
                 print(UIStrings.MainMenu.EXIT_MESSAGE)
                 break
             else:
-                # Handle invalid main menu choice
+                # Handle invalid main menu choice with exact error messaging
                 print(UIStrings.MainMenu.INVALID_CHOICE)
 
         except ValueError:

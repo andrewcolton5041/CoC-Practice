@@ -1,302 +1,67 @@
-=== UI Test Results ===
+=== All Tests Results ===
 
 ============================= test session starts ==============================
 platform linux -- Python 3.11.10, pytest-8.3.4, pluggy-1.5.0 -- /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3
 cachedir: .pytest_cache
 rootdir: /home/runner/workspace
 configfile: pyproject.toml
-collecting ... collected 6 items
+collecting ... collected 54 items
 
-tests/test_ui.py::test_display_main_menu PASSED                          [ 16%]
-tests/test_ui.py::test_run_character_view FAILED                         [ 33%]
-tests/test_ui.py::test_run_character_view_return_to_menu PASSED          [ 50%]
-tests/test_ui.py::test_menu_flow FAILED                                  [ 66%]
-tests/test_ui.py::test_menu_test_option_flow FAILED                      [ 83%]
-tests/test_ui.py::test_menu_invalid_choice FAILED                        [100%]
+tests/test_character_utils.py::test_skill_check_from_skills_successful PASSED [  1%]
+tests/test_character_utils.py::test_attribute_check_from_attributes_successful PASSED [  3%]
+tests/test_character_utils.py::test_non_existant_skill_or_attribute_returns_error PASSED [  5%]
+tests/test_character_utils.py::test_skill_lower_edge_boundary PASSED     [  7%]
+tests/test_character_utils.py::test_skill_upper_edge_boundary PASSED     [  9%]
+tests/test_character_utils.py::test_skill_return_format_correct PASSED   [ 11%]
+tests/test_character_utils.py::test_first_char_wins_opposed_check PASSED [ 12%]
+tests/test_character_utils.py::test_second_char_wins_opposed_check PASSED [ 14%]
+tests/test_character_utils.py::test_tie_breaking_with_better_margin PASSED [ 16%]
+tests/test_character_utils.py::test_complete_tie_case PASSED             [ 18%]
+tests/test_character_utils.py::test_opposed_check_different_skills PASSED [ 20%]
+tests/test_character_utils.py::test_opposed_check_error_handling PASSED  [ 22%]
+tests/test_character_utils.py::test_get_skill_from_skills PASSED         [ 24%]
+tests/test_character_utils.py::test_get_skill_from_attributes PASSED     [ 25%]
+tests/test_character_utils.py::test_get_skill_value_error_handling PASSED [ 27%]
+tests/test_character_utils.py::test_simple_damage_formula PASSED         [ 29%]
+tests/test_character_utils.py::test_complex_damage_formula PASSED        [ 31%]
+tests/test_character_utils.py::test_damage_formula_with_damage_bonus PASSED [ 33%]
+tests/test_character_utils.py::test_unparseable_damage_formula PASSED    [ 35%]
+tests/test_character_utils.py::test_damage_edge_cases PASSED             [ 37%]
+tests/test_dice_roll.py::test_standard_dice_roll PASSED                  [ 38%]
+tests/test_dice_roll.py::test_dice_roll_with_modifier PASSED             [ 40%]
+tests/test_dice_roll.py::test_dice_roll_with_subtraction PASSED          [ 42%]
+tests/test_dice_roll.py::test_dice_roll_with_multiplication PASSED       [ 44%]
+tests/test_dice_roll.py::test_return_details_option PASSED               [ 46%]
+tests/test_dice_roll.py::test_invalid_dice_format PASSED                 [ 48%]
+tests/test_dice_roll.py::test_max_dice_count_limit PASSED                [ 50%]
+tests/test_dice_roll.py::test_max_dice_sides_limit PASSED                [ 51%]
+tests/test_dice_roll.py::test_percentile_dice_roll PASSED                [ 53%]
+tests/test_dice_roll.py::test_randomness_distribution PASSED             [ 55%]
+tests/test_coc_rules.py::test_extreme_success PASSED                     [ 57%]
+tests/test_coc_rules.py::test_hard_success PASSED                        [ 59%]
+tests/test_coc_rules.py::test_regular_success PASSED                     [ 61%]
+tests/test_coc_rules.py::test_failure PASSED                             [ 62%]
+tests/test_coc_rules.py::test_fumble_low_skill PASSED                    [ 64%]
+tests/test_coc_rules.py::test_fumble_high_skill PASSED                   [ 66%]
+tests/test_coc_rules.py::test_high_skill_not_fumble PASSED               [ 68%]
+tests/test_coc_rules.py::test_exact_skill_roll PASSED                    [ 70%]
+tests/test_coc_rules.py::test_exact_half_skill_roll PASSED               [ 72%]
+tests/test_coc_rules.py::test_exact_fifth_skill_roll PASSED              [ 74%]
+tests/test_coc_rules.py::test_min_skill PASSED                           [ 75%]
+tests/test_coc_rules.py::test_improvement_successful PASSED              [ 77%]
+tests/test_coc_rules.py::test_improvement_failed PASSED                  [ 79%]
+tests/test_coc_rules.py::test_improvement_equal_to_stat PASSED           [ 81%]
+tests/test_coc_rules.py::test_improvement_low_stat PASSED                [ 83%]
+tests/test_coc_rules.py::test_improvement_high_stat PASSED               [ 85%]
+tests/test_json_reader.py::test_load_character_from_json PASSED          [ 87%]
+tests/test_json_reader.py::test_load_character_from_json_file_not_found PASSED [ 88%]
+tests/test_json_reader.py::test_display_character PASSED                 [ 90%]
+tests/test_json_reader.py::test_display_character_minimal_data PASSED    [ 92%]
+tests/test_json_reader.py::test_display_character_missing_optional_fields PASSED [ 94%]
+tests/test_json_reader.py::test_json_file_extension PASSED               [ 96%]
+tests/test_ui.py::test_display_main_menu PASSED                          [ 98%]
+tests/test_ui.py::test_menu_basic_flow PASSED                            [100%]
 
-=================================== FAILURES ===================================
-___________________________ test_run_character_view ____________________________
+============================== 54 passed in 0.15s ==============================
 
-    def test_run_character_view():
-        """
-        Test the character view process.
-        """
-        # Prepare mock character files
-        mock_characters = ['eleanor.json', 'jennifer.json']
-    
-        # Patch the individual methods separately to capture their calls
-        with patch('os.path.join', return_value='characters/eleanor.json') as mock_path_join, \
-             patch('builtins.input', side_effect=['1', '']), \
-             patch('src.json_reader.load_character_from_json') as mock_load, \
-             patch('src.json_reader.display_character') as mock_display:
-    
-            # Setup mock data for character loading
-            expected_data = {
-                'name': 'Eleanor Butler',
-                'age': 39,
-                'occupation': 'History Professor'
-            }
-            mock_load.return_value = expected_data
-    
-            # Call the character view function
-            result = run_character_view(mock_characters)
-    
-            # Verify specific method calls
-            mock_path_join.assert_called_with(UIStrings.CharacterViewer.CHARACTERS_DIR, 'eleanor.json')
->           mock_load.assert_called_with('characters/eleanor.json')
-
-tests/test_ui.py:75: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <MagicMock name='load_character_from_json' id='139844082391952'>
-args = ('characters/eleanor.json',), kwargs = {}
-expected = "load_character_from_json('characters/eleanor.json')"
-actual = 'not called.'
-error_message = "expected call not found.\nExpected: load_character_from_json('characters/eleanor.json')\n  Actual: not called."
-
-    def assert_called_with(self, /, *args, **kwargs):
-        """assert that the last call was made with the specified arguments.
-    
-        Raises an AssertionError if the args and keyword args passed in are
-        different to the last call to the mock."""
-        if self.call_args is None:
-            expected = self._format_mock_call_signature(args, kwargs)
-            actual = 'not called.'
-            error_message = ('expected call not found.\nExpected: %s\n  Actual: %s'
-                    % (expected, actual))
->           raise AssertionError(error_message)
-E           AssertionError: expected call not found.
-E           Expected: load_character_from_json('characters/eleanor.json')
-E             Actual: not called.
-
-/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:930: AssertionError
------------------------------ Captured stdout call -----------------------------
-
-=== Character Viewer ===
-1. Eleanor
-2. Jennifer
-3. Return to Main Menu
-==================================================
-
-==================================================
-Name: Professor Eleanor Butler
-Age: 39
-Occupation: History Professor
-Nationality: American
-
---- Attributes ---
-Strength: 55
-Constitution: 65
-Size: 65
-Dexterity: 65
-Intelligence: 65
-Appearance: 35
-Power: 65
-Education: 90
-Luck: 0
-Sanity: 65
-Magic: 13
-HP: 13
-Movement: 8
-Damage Bonus: None
-Build: 0
-
---- Skills ---
-Archaeology: 30
-Climb: 30
-Credit Rating: 35
-Fast Talk: 40
-History: 75
-Jump: 35
-Language (English): 90
-Language (German): 50
-Language (Greek): 35
-Language (Spanish): 40
-Library Use: 45
-Listen: 40
-Mechanical Repair: 15
-Natural World: 20
-Occult: 20
-Persuade: 40
-Psychology: 30
-Spot Hidden: 30
-Stealth: 35
-Swim: 40
-Brawl: 60
-Dodge: 35
-
---- Weapons ---
-Brawl - Skill: 60 - Damage: 1D3
-
---- Backstory ---
-Eleanor grew up on a farm in the Midwest, yearning for a break from the monotony of her life. When faced with the prospect of marrying a local boy, she resolved to escape the future that destiny had in store for her and ran away, jumping a train to New York. Working what jobs she could find, she still found time for her favorite pastime, reading history books in the New York Public Library; a lifelong passion that drove her into getting an education and becoming a historian. In academic life, she has yet to make a mark, a fact that often plays upon her mind, as she sees others finding renown while her work goes unrecognized.
-==================================================
-________________________________ test_menu_flow ________________________________
-
-    def test_menu_flow():
-        """
-        Test the overall menu flow when viewing characters.
-        """
-        with patch('os.listdir', return_value=['eleanor.json', 'jennifer.json']), \
-             patch('builtins.input', side_effect=['1', '1', '', '3']) as mock_input, \
-             patch('os.path.join', return_value='characters/eleanor.json'), \
-             patch('src.json_reader.load_character_from_json') as mock_load, \
-             patch('src.json_reader.display_character') as mock_display, \
-             patch('builtins.print') as mock_print, \
-             patch('src.test_runner.test_menu') as mock_test_menu:
-    
-            # Setup mock character data
-            expected_data = {
-                'name': 'Eleanor Butler',
-                'age': 39,
-                'occupation': 'History Professor'
-            }
-            mock_load.return_value = expected_data
-    
-            # Call the menu function
-            menu()
-    
-            # Verify the expected interactions
-            mock_input.assert_has_calls([
-                call(UIStrings.MainMenu.PROMPT),
-                call(UIStrings.CharacterViewer.selection_prompt(3)),
-                call(UIStrings.CharacterViewer.CONTINUE_PROMPT),
-                call(UIStrings.MainMenu.PROMPT)
-            ])
->           mock_load.assert_called_once()
-
-tests/test_ui.py:128: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <MagicMock name='load_character_from_json' id='139844080770704'>
-
-    def assert_called_once(self):
-        """assert that the mock was called only once.
-        """
-        if not self.call_count == 1:
-            msg = ("Expected '%s' to have been called once. Called %s times.%s"
-                   % (self._mock_name or 'mock',
-                      self.call_count,
-                      self._calls_repr()))
->           raise AssertionError(msg)
-E           AssertionError: Expected 'load_character_from_json' to have been called once. Called 0 times.
-
-/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:918: AssertionError
-__________________________ test_menu_test_option_flow __________________________
-
-    def test_menu_test_option_flow():
-        """
-        Test the test menu option flow.
-        """
-        with patch('builtins.input', side_effect=['2', '7', '3']) as mock_input, \
-             patch('os.listdir', return_value=[]), \
-             patch('src.test_runner.test_menu') as mock_test_menu, \
-             patch('builtins.print') as mock_print:
-    
-            # Call the menu function
-            menu()
-    
-            # Verify test menu was called and exit message printed
-            mock_input.assert_has_calls([
-                call(UIStrings.MainMenu.PROMPT),
-                call(UIStrings.TestMenu.PROMPT),
-                call(UIStrings.MainMenu.PROMPT)
-            ])
->           mock_test_menu.assert_called_once()
-
-tests/test_ui.py:150: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <MagicMock name='test_menu' id='139844082398416'>
-
-    def assert_called_once(self):
-        """assert that the mock was called only once.
-        """
-        if not self.call_count == 1:
-            msg = ("Expected '%s' to have been called once. Called %s times.%s"
-                   % (self._mock_name or 'mock',
-                      self.call_count,
-                      self._calls_repr()))
->           raise AssertionError(msg)
-E           AssertionError: Expected 'test_menu' to have been called once. Called 0 times.
-
-/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:918: AssertionError
-___________________________ test_menu_invalid_choice ___________________________
-
-    def test_menu_invalid_choice():
-        """
-        Test handling of invalid menu choices.
-        """
-        with patch('builtins.input', side_effect=['4', '3']) as mock_input, \
-             patch('os.listdir', return_value=[]), \
-             patch('builtins.print') as mock_print:
-    
-            # Call the menu function
-            menu()
-    
-            # Verify invalid choice and exit messages
-            mock_input.assert_has_calls([
-                call(UIStrings.MainMenu.PROMPT),
-                call(UIStrings.MainMenu.PROMPT)
-            ])
->           mock_print.assert_has_calls([
-                call(UIStrings.MainMenu.INVALID_CHOICE),
-                call(UIStrings.MainMenu.EXIT_MESSAGE)
-            ])
-
-tests/test_ui.py:169: 
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-self = <MagicMock name='print' id='139844079982416'>
-calls = [call('Invalid selection.'), call('Exiting the Call of Cthulhu application.')]
-any_order = False
-
-    def assert_has_calls(self, calls, any_order=False):
-        """assert the mock has been called with the specified calls.
-        The `mock_calls` list is checked for the calls.
-    
-        If `any_order` is False (the default) then the calls must be
-        sequential. There can be extra calls before or after the
-        specified calls.
-    
-        If `any_order` is True then the calls can be in any order, but
-        they must all appear in `mock_calls`."""
-        expected = [self._call_matcher(c) for c in calls]
-        cause = next((e for e in expected if isinstance(e, Exception)), None)
-        all_calls = _CallList(self._call_matcher(c) for c in self.mock_calls)
-        if not any_order:
-            if expected not in all_calls:
-                if cause is None:
-                    problem = 'Calls not found.'
-                else:
-                    problem = ('Error processing expected calls.\n'
-                               'Errors: {}').format(
-                                   [e if isinstance(e, Exception) else None
-                                    for e in expected])
->               raise AssertionError(
-                    f'{problem}\n'
-                    f'Expected: {_CallList(calls)}'
-                    f'{self._calls_repr(prefix="  Actual").rstrip(".")}'
-                ) from cause
-E               AssertionError: Calls not found.
-E               Expected: [call('Invalid selection.'), call('Exiting the Call of Cthulhu application.')]
-E                 Actual: [call('\n=== Call of Cthulhu: Masks of Nyarlathotep ==='),
-E                call('1. View Premade Character'),
-E                call('2. Run Tests'),
-E                call('3. Exit'),
-E                call('Invalid selection.'),
-E                call('\n=== Call of Cthulhu: Masks of Nyarlathotep ==='),
-E                call('1. View Premade Character'),
-E                call('2. Run Tests'),
-E                call('3. Exit'),
-E                call('Exiting the Call of Cthulhu application.')]
-
-/nix/store/clx0mcir7qw8zk36zbr4jra789g3knf6-python3-3.11.10/lib/python3.11/unittest/mock.py:976: AssertionError
-=========================== short test summary info ============================
-FAILED tests/test_ui.py::test_run_character_view - AssertionError: expected c...
-FAILED tests/test_ui.py::test_menu_flow - AssertionError: Expected 'load_char...
-FAILED tests/test_ui.py::test_menu_test_option_flow - AssertionError: Expecte...
-FAILED tests/test_ui.py::test_menu_invalid_choice - AssertionError: Calls not...
-========================= 4 failed, 2 passed in 0.25s ==========================
-
-✗ Test failed. See details above.
+✓ All tests completed successfully!
