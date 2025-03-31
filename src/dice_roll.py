@@ -19,7 +19,12 @@ import re
 import random
 import operator
 from typing import TypedDict, List, Union, overload, Literal
-from src.constants import Dice, RegexFlags, ErrorMessages, MaxLimits
+from src.constants import (
+    DiceConstants, 
+    RegexFlags, 
+    ErrorMessages, 
+    SystemLimits
+)
 
 
 class DiceResult(TypedDict):
@@ -51,13 +56,13 @@ def roll_dice(dice_string: str, return_details: bool = False) -> Union[int, Dice
         ValueError: If the dice string is invalid.
     '''
 
-    #parse the dice string
-    pattern = Dice.DicePattern.DICE_PATTERN
+    # Parse the dice string
+    pattern = DiceConstants.DICE_PATTERN
 
-    match = re.search(pattern, dice_string, RegexFlags.CASE_INSENSITIVE)
+    match = re.search(pattern, dice_string, RegexFlags.VERBOSE | RegexFlags.IGNORE_CASE)
 
     if not match:
-        raise ValueError(f"{ErrorMessages.DICE_VALUE_ERROR}: '{dice_string}'")
+        raise ValueError(f"{ErrorMessages.INVALID_DICE_FORMAT}: '{dice_string}'")
 
     num_dice = int(match.group(1))
     dice_sides = int(match.group(2))
@@ -65,17 +70,17 @@ def roll_dice(dice_string: str, return_details: bool = False) -> Union[int, Dice
     modifier = int(match.group(5)) if match.group(4) else 0
     multiplier = int(match.group(7)) if match.group(6) else 0
 
-    #Check to see if the number of dice is within the limit
-    if num_dice > MaxLimits.MAX_DICE_NUM:
-        raise ValueError(f"{ErrorMessages.DICE_NUM_ERROR}: '{dice_string}'")
-    #Check to see if the number of dice sides is within the limit
-    if dice_sides > MaxLimits.MAX_DICE_SIDES:
-        raise ValueError(f"{ErrorMessages.DICE_SIDE_ERROR}: '{dice_string}'")
+    # Check to see if the number of dice is within the limit
+    if num_dice > SystemLimits.MAX_DICE_COUNT:
+        raise ValueError(f"{ErrorMessages.INVALID_DICE_COUNT}: '{dice_string}'")
+    # Check to see if the number of dice sides is within the limit
+    if dice_sides > SystemLimits.MAX_DICE_SIDES:
+        raise ValueError(f"{ErrorMessages.INVALID_DICE_SIDES}: '{dice_string}'")
 
-    #roll the dice
+    # Roll the dice
     rolls = [random.randint(1, dice_sides) for _ in range(num_dice)]
     total = sum(rolls)
-    #calculate the total
+    # Calculate the total
     if add_sub == "+":
         total += modifier
     elif add_sub == "-":
@@ -83,7 +88,7 @@ def roll_dice(dice_string: str, return_details: bool = False) -> Union[int, Dice
 
     if multiplier > 1:
         total *= multiplier
-    #return the result
+    # Return the result
 
     if return_details:
         return {"total": total, "rolls": rolls}
