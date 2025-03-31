@@ -141,8 +141,9 @@ class UIStrings:
         """
         TITLE = "\n=== Call of Cthulhu: Masks of Nyarlathotep ==="
         OPTION_VIEW_CHARACTER = "1. View Premade Character"
-        OPTION_EXIT = "2. Exit"
-        PROMPT = "\nEnter your choice (1-2): "
+        OPTION_RUN_TESTS = "2. Run Tests"
+        OPTION_EXIT = "3. Exit"
+        PROMPT = "\nEnter your choice (1-3): "
         EXIT_MESSAGE = "Exiting the Call of Cthulhu application."
         INVALID_CHOICE = "Invalid selection."
 
@@ -197,6 +198,40 @@ class UIStrings:
         def format_weapon(name: str, skill: int, damage: str) -> str:
             """Format a weapon line."""
             return f"{name} - Skill: {skill} - Damage: {damage}"
+
+    class TestMenu:
+        TITLE = "\n=== Test Menu ==="
+        OPTION_CHARACTER_UTILS_TEST = "1. Character Utilities Test"
+        OPTION_DICE_ROLL_TEST = "2. Dice"
+        OPTION_COC_RULES_TEST = "3. Coc Rules Test"
+        OPTION_JSON_READER_TEST = "4. Json Reader Test"
+        OPTION_UI_TEST = "5. UI Test"
+        OPTION_RUN_ALL_TESTS = "6. Run All Tests"
+        OPTION_RETURN_TO_MAIN = "7. Return to Main Menu"
+
+        PROMPT = "\nEnter your choice (1-7): "
+
+        # Success messages
+        TEST_SUCCESS = "✓ Test passed successfully!"
+        ALL_TESTS_SUCCESS = "✓ All tests completed successfully!"
+        SOME_TESTS_SUCCESS = "⚠ Some tests passed, but others failed. See details above."
+
+        # Failure messages
+        TEST_FAILURE = "✗ Test failed. See details above."
+        ALL_TESTS_FAILURE = "✗ All tests failed. See details above."
+        TEST_ERROR = "⚠ Error running test. Make sure the test file exists and is properly formatted."
+
+        # Informational messages
+        TEST_RUNNING = "Running test: {}"
+        ALL_TESTS_RUNNING = "Running all tests..."
+        NO_TESTS_FOUND = "No test files found in the tests directory."
+
+        # Result summary
+        TEST_SUMMARY = "\n--- Test Summary ---"
+        TOTAL_TESTS = "Total tests run: {}"
+        TESTS_PASSED = "Tests passed: {}"
+        TESTS_FAILED = "Tests failed: {}"
+        TEST_RUN_TIME = "Total run time: {:.2f} seconds"
 
 
 class FileConstants:

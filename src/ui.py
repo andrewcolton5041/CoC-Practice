@@ -10,8 +10,10 @@ Last Updated: 3/31/2025
 """
 
 import os
+from src.test_runner import test_menu
 from src.json_reader import display_character, load_character_from_json
 from src.constants import UIStrings, FileConstants, ErrorMessages, Defaults
+   
 
 def menu():
     """
@@ -24,6 +26,7 @@ def menu():
         # Display main menu
         print(UIStrings.MainMenu.TITLE)
         print(UIStrings.MainMenu.OPTION_VIEW_CHARACTER)
+        print(UIStrings.MainMenu.OPTION_RUN_TESTS)
         print(UIStrings.MainMenu.OPTION_EXIT)
 
         # Get user choice
@@ -77,8 +80,11 @@ def menu():
                         print(UIStrings.MainMenu.INVALID_CHOICE)
                 except ValueError:
                     print(ErrorMessages.INVALID_CHOICE)
+        elif choice == "2":
+            test_menu()
 
-        elif choice == "2":  # Exit option
+            
+        elif choice == "3":  # Exit option
             # Exit the application
             print(UIStrings.MainMenu.EXIT_MESSAGE)
             break
