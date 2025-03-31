@@ -49,7 +49,7 @@ class RuleConstants:
     """
     Constants for Call of Cthulhu game rule calculations.
     """
-
+    MAX_SKILL_VALUE = 100  # Maximum value a skill can reach
     class SkillDivisors:
         """
         Divisors used for determining success levels.
@@ -208,8 +208,9 @@ class UIStrings:
         OPTION_COC_RULES_TEST = "3. Coc Rules Test"
         OPTION_JSON_READER_TEST = "4. Json Reader Test"
         OPTION_UI_TEST = "5. UI Test"
-        OPTION_RUN_ALL_TESTS = "6. Run All Tests"
-        OPTION_RETURN_TO_MAIN = "7. Return to Main Menu"
+        OPTION_DEVELOPMENT_PHASE_TESTS = "6. Investigator Development Phase Tests"
+        OPTION_RUN_ALL_TESTS = "7. Run All Tests"
+        OPTION_RETURN_TO_MAIN = "8. Return to Main Menu"
 
         PROMPT = "\nEnter your choice (1-7): "
 
@@ -311,6 +312,7 @@ class TestConstants:
     COC_RULES_TEST = "tests/test_coc_rules.py"
     JSON_READER_TEST = "tests/test_json_reader.py"
     UI_TEST = "tests/test_ui.py"
+    INVESTIGATOR_DEVELOPMENT_TEST = "tests/test_investigator_development_phase.py"
 
     # Test output file
     TEST_RESULTS_FILE = "Test Results.txt"

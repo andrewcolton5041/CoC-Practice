@@ -1,6 +1,21 @@
+"""
+Test Runner Module
+
+Provides functionality to run tests for different modules 
+in the Call of Cthulhu text adventure game.
+
+Author: Andrew C
+Version: 1.1
+Last Updated: 3/31/2025
+"""
+
 import subprocess
 import os
-from src.constants import UIStrings, ErrorMessages, TestConstants
+from src.constants import (
+    UIStrings, 
+    ErrorMessages, 
+    TestConstants
+)
 
 
 def test_menu():
@@ -17,6 +32,7 @@ def test_menu():
         print(UIStrings.TestMenu.OPTION_COC_RULES_TEST)
         print(UIStrings.TestMenu.OPTION_JSON_READER_TEST)
         print(UIStrings.TestMenu.OPTION_UI_TEST)
+        print(UIStrings.TestMenu.OPTION_DEVELOPMENT_PHASE_TESTS)
         print(UIStrings.TestMenu.OPTION_RUN_ALL_TESTS)
         print(UIStrings.TestMenu.OPTION_RETURN_TO_MAIN)
 
@@ -36,8 +52,10 @@ def test_menu():
             elif selection == "5":
                 run_ui_test()
             elif selection == "6":
-                run_all_tests()
+                run_test(TestConstants.INVESTIGATOR_DEVELOPMENT_TEST, "Investigator Development")
             elif selection == "7":
+                run_all_tests()
+            elif selection == "8":
                 # Return to main menu
                 break
             else:
@@ -155,7 +173,8 @@ def run_all_tests():
         TestConstants.DICE_ROLL_TEST,
         TestConstants.COC_RULES_TEST,
         TestConstants.JSON_READER_TEST,
-        TestConstants.UI_TEST
+        TestConstants.UI_TEST,
+        TestConstants.INVESTIGATOR_DEVELOPMENT_TEST
     ]
 
     # Create a list of test files that actually exist
