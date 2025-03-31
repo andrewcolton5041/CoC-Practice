@@ -1,33 +1,129 @@
-=== Character Utils Test Results ===
+=== CoC Rules Test Results ===
 
 ============================= test session starts ==============================
 platform linux -- Python 3.11.10, pytest-8.3.4, pluggy-1.5.0 -- /nix/store/wqhkxzzlaswkj3gimqign99sshvllcg6-python-wrapped-0.1.0/bin/python3
 cachedir: .pytest_cache
 rootdir: /home/runner/workspace
 configfile: pyproject.toml
-collecting ... collected 20 items
+collecting ... collected 17 items
 
-tests/test_character_utils.py::test_skill_check_from_skills_successful PASSED [  5%]
-tests/test_character_utils.py::test_attribute_check_from_attributes_successful PASSED [ 10%]
-tests/test_character_utils.py::test_non_existant_skill_or_attribute_returns_error PASSED [ 15%]
-tests/test_character_utils.py::test_skill_lower_edge_boundary PASSED     [ 20%]
-tests/test_character_utils.py::test_skill_upper_edge_boundary PASSED     [ 25%]
-tests/test_character_utils.py::test_skill_return_format_correct PASSED   [ 30%]
-tests/test_character_utils.py::test_first_char_wins_opposed_check PASSED [ 35%]
-tests/test_character_utils.py::test_second_char_wins_opposed_check PASSED [ 40%]
-tests/test_character_utils.py::test_tie_breaking_with_better_margin PASSED [ 45%]
-tests/test_character_utils.py::test_complete_tie_case PASSED             [ 50%]
-tests/test_character_utils.py::test_opposed_check_different_skills PASSED [ 55%]
-tests/test_character_utils.py::test_opposed_check_error_handling PASSED  [ 60%]
-tests/test_character_utils.py::test_get_skill_from_skills PASSED         [ 65%]
-tests/test_character_utils.py::test_get_skill_from_attributes PASSED     [ 70%]
-tests/test_character_utils.py::test_get_skill_value_error_handling PASSED [ 75%]
-tests/test_character_utils.py::test_simple_damage_formula PASSED         [ 80%]
-tests/test_character_utils.py::test_complex_damage_formula PASSED        [ 85%]
-tests/test_character_utils.py::test_damage_formula_with_damage_bonus PASSED [ 90%]
-tests/test_character_utils.py::test_unparseable_damage_formula PASSED    [ 95%]
-tests/test_character_utils.py::test_damage_edge_cases PASSED             [100%]
+tests/test_coc_rules.py::test_extreme_success PASSED                     [  5%]
+tests/test_coc_rules.py::test_hard_success PASSED                        [ 11%]
+tests/test_coc_rules.py::test_regular_success PASSED                     [ 17%]
+tests/test_coc_rules.py::test_failure PASSED                             [ 23%]
+tests/test_coc_rules.py::test_fumble_low_skill FAILED                    [ 29%]
+tests/test_coc_rules.py::test_fumble_high_skill FAILED                   [ 35%]
+tests/test_coc_rules.py::test_high_skill_not_fumble FAILED               [ 41%]
+tests/test_coc_rules.py::test_exact_skill_roll PASSED                    [ 47%]
+tests/test_coc_rules.py::test_exact_half_skill_roll FAILED               [ 52%]
+tests/test_coc_rules.py::test_exact_fifth_skill_roll FAILED              [ 58%]
+tests/test_coc_rules.py::test_min_skill PASSED                           [ 64%]
+tests/test_coc_rules.py::test_max_skill FAILED                           [ 70%]
+tests/test_coc_rules.py::test_improvement_successful PASSED              [ 76%]
+tests/test_coc_rules.py::test_improvement_failed PASSED                  [ 82%]
+tests/test_coc_rules.py::test_improvement_equal_to_stat PASSED           [ 88%]
+tests/test_coc_rules.py::test_improvement_low_stat PASSED                [ 94%]
+tests/test_coc_rules.py::test_improvement_high_stat PASSED               [100%]
 
-============================== 20 passed in 0.09s ==============================
+=================================== FAILURES ===================================
+____________________________ test_fumble_low_skill _____________________________
 
-✓ Test passed successfully!
+    def test_fumble_low_skill():
+        """
+        Test that success_check correctly identifies fumble for skills <= 50
+        when the roll is 96-100.
+        """
+        # Arrange
+>       skill = RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD  # 50
+E       NameError: name 'RuleConstants' is not defined
+
+tests/test_coc_rules.py:104: NameError
+____________________________ test_fumble_high_skill ____________________________
+
+    def test_fumble_high_skill():
+        """
+        Test that success_check correctly identifies fumble for skills > 50
+        when the roll is exactly 100.
+        """
+        # Arrange
+>       skill = RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD + 10  # 60
+E       NameError: name 'RuleConstants' is not defined
+
+tests/test_coc_rules.py:121: NameError
+__________________________ test_high_skill_not_fumble __________________________
+
+    def test_high_skill_not_fumble():
+        """
+        Test that success_check correctly does not identify rolls of 96-99 as fumbles
+        for skills > 50.
+        """
+        # Arrange
+>       skill = RuleConstants.FumbleBoundaries.FUMBLE_THRESHOLD + 10  # 60
+E       NameError: name 'RuleConstants' is not defined
+
+tests/test_coc_rules.py:138: NameError
+__________________________ test_exact_half_skill_roll __________________________
+
+    def test_exact_half_skill_roll():
+        """
+        Test that success_check correctly identifies hard success
+        when the roll is exactly equal to half the skill value.
+        """
+        # Arrange
+        skill = TestConstants.SKILL_HARD_THRESHOLD
+        expected_result = SuccessLevel.HARD_SUCCESS
+    
+        # Act
+>       with patch('src.dice_roll.roll_dice', return_value=skill // RuleConstants.SkillDivisors.HALF_VALUE):
+E       NameError: name 'RuleConstants' is not defined
+
+tests/test_coc_rules.py:176: NameError
+_________________________ test_exact_fifth_skill_roll __________________________
+
+    def test_exact_fifth_skill_roll():
+        """
+        Test that success_check correctly identifies extreme success
+        when the roll is exactly equal to one fifth of the skill value.
+        """
+        # Arrange
+        skill = TestConstants.SKILL_EXTREME_THRESHOLD
+        expected_result = SuccessLevel.EXTREME_SUCCESS
+    
+        # Act
+>       with patch('src.dice_roll.roll_dice', return_value=skill // RuleConstants.SkillDivisors.FIFTH_VALUE):
+E       NameError: name 'RuleConstants' is not defined
+
+tests/test_coc_rules.py:193: NameError
+________________________________ test_max_skill ________________________________
+
+    def test_max_skill():
+        """
+        Test that success_check handles the maximum skill value (100) correctly.
+        Everything except 100 should be a success with skill 100.
+        """
+        # Arrange
+        skill = TestConstants.MAX_SKILL
+    
+        # Act & Assert for roll 99 (should be regular success)
+        with patch('src.dice_roll.roll_dice', return_value=99):
+            result = success_check(skill)
+            assert result == SuccessLevel.REGULAR_SUCCESS
+    
+        # Act & Assert for roll 100 (should be fumble)
+        with patch('src.dice_roll.roll_dice', return_value=100):
+            result = success_check(skill)
+>           assert result == SuccessLevel.FUMBLE
+E           AssertionError: assert <SuccessLevel.REGULAR_SUCCESS: 'Regular Success'> == <SuccessLevel.FUMBLE: 'Fumble'>
+E            +  where <SuccessLevel.FUMBLE: 'Fumble'> = SuccessLevel.FUMBLE
+
+tests/test_coc_rules.py:233: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_coc_rules.py::test_fumble_low_skill - NameError: name 'Rule...
+FAILED tests/test_coc_rules.py::test_fumble_high_skill - NameError: name 'Rul...
+FAILED tests/test_coc_rules.py::test_high_skill_not_fumble - NameError: name ...
+FAILED tests/test_coc_rules.py::test_exact_half_skill_roll - NameError: name ...
+FAILED tests/test_coc_rules.py::test_exact_fifth_skill_roll - NameError: name...
+FAILED tests/test_coc_rules.py::test_max_skill - AssertionError: assert <Succ...
+========================= 6 failed, 11 passed in 0.12s =========================
+
+✗ Test failed. See details above.

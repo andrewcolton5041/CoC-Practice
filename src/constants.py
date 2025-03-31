@@ -316,6 +316,24 @@ class TestConstants:
     # Test command options
     PYTEST_VERBOSE_FLAG = "-v"
 
+    # For testing success_check function:
+    SKILL_EXTREME_THRESHOLD = 20  # Value at which roll <= skill/5 is extreme success
+    SKILL_HARD_THRESHOLD = 40     # Value at which roll <= skill/2 is hard success
+    SKILL_REGULAR_THRESHOLD = 85  # Value for testing regular success
+
+    # Common dice roll results for testing:
+    EXTREME_SUCCESS_ROLL = 4      # Roll below SKILL_EXTREME_THRESHOLD/5
+    HARD_SUCCESS_ROLL = 15        # Roll below SKILL_HARD_THRESHOLD/2
+    REGULAR_SUCCESS_ROLL = 70     # Roll below SKILL_REGULAR_THRESHOLD 
+    FAILURE_ROLL = 90             # Roll above skill but not a fumble
+    FUMBLE_ROLL_LOW_SKILL = 98    # Fumble roll for skill <= 50
+    FUMBLE_ROLL_HIGH_SKILL = 100  # Fumble roll for skill > 50
+    NEAR_FUMBLE_ROLL = 95         # Roll near fumble threshold but not a fumble for high skill
+
+    # Edge case skills:
+    MIN_SKILL = 0                 # Minimum skill value
+    MAX_SKILL = 100               # Maximum skill value
+
     class CharacterNames:
         """Character names used in tests."""
         CHARACTER_1_NAME = "Alice"
