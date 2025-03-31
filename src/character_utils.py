@@ -16,7 +16,7 @@ Version: 1.0
 Last Updated: Unknown
 """
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 from src.dice_roll import roll_dice
 from src.coc_rules import success_check
 from src.constants import CharacterSheetKeys, Dice, OtherConstants, SuccessLevel, CharacterUtils, ErrorMessages
@@ -124,7 +124,7 @@ def get_skill_value(character_data: Dict, skill_name: str) -> int:
     else:
         raise ValueError(ErrorMessages.skill_value_not_found(skill_name))
 
-def roll_damage(weapon_data: Dict) -> int | str:
+def roll_damage(weapon_data: Dict) -> Union[int, str]:
     """
     Calculate damage for a weapon attack based on its damage formula.
 
