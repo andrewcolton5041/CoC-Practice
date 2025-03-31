@@ -10,14 +10,15 @@ The module provides functions for:
 
 These functions follow the 7th edition Call of Cthulhu rules.
 
-Author: Unknown
+Author: Andrew C
 Version: 1.0
-Last Updated: Unknown
+Last Updated: 03/31/2025
 """
 
-import dice_roll as dr
+import src.dice_roll as dr
+from src.constants import SuccessLevel, Dice, FumbleBoundaries, HalfFifth
 
-def improvement_check(stat):
+def improvement_check(stat: int)-> bool:
     """
     Determines if a character's stat can improve based on a d100 roll.
 
@@ -30,9 +31,9 @@ def improvement_check(stat):
     Returns:
         bool: True if the check succeeds (roll > stat), False otherwise.
     """
-    return dr.roll_dice("1D100") > stat
+    return dr.roll_dice(Dice.PERCENTILE_DIE, False) > stat
 
-def success_check(stat):
+def success_check(stat: int) -> str:
     """
     Rolls 1D100 and determines the level of success based on the character's stat.
 
@@ -51,20 +52,20 @@ def success_check(stat):
         str: One of: "Extreme Success", "Hard Success", "Regular Success", "Failure", or "Fumble"
     """
     # Roll a d100
-    roll = dr.roll_dice("1D100")
+    roll = dr.roll_dice(Dice.PERCENTILE_DIE)
 
     # Check for Extreme Success (Critical) - 1/5 of skill value
-    if roll <= stat / 5:
-        return "Extreme Success"
+    if roll <= stat / HalfFifth.FIFTH_VALUE:
+        return SuccessLevel.EXTREME_SUCCESS
     # Check for Hard Success - 1/2 of skill value
-    elif roll <= stat / 2:
-        return "Hard Success"
+    elif roll <= stat / HalfFifth.HALF_VALUE:
+        return SuccessLevel.HARD_SUCCESS
     # Check for Regular Success - equal to or under skill value
     elif roll <= stat:
-        return "Regular Success"
+        return SuccessLevel.REGULAR_SUCCESS
     # Check for Fumble - 96-100 for skills 50 or less, only 100 for skills over 50
-    elif (stat <= 50 and 96 <= roll <= 100) or (stat > 50 and roll == 100):
-        return "Fumble"
+    elif (stat <= FumbleBoundaries.FUMBLE_REDUCED_CHECK and FumbleBoundaries.FUMBLE_REDUCED_CHECK_MIN <= roll) or (stat > FumbleBoundaries.FUMBLE_REDUCED_CHECK and roll == FumbleBoundaries.FUMBLE_CHECK_MIN):
+        return SuccessLevel.FUMBLE
     # Everything else is a normal failure
     else:
-        return "Failure"
+        return SuccessLevel.FAILURE
