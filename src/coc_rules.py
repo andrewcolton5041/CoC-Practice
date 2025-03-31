@@ -33,7 +33,7 @@ def improvement_check(stat: int)-> bool:
     """
     return dr.roll_dice(Dice.PERCENTILE_DIE, False) > stat
 
-def success_check(stat: int) -> str:
+def success_check(stat: int) -> SuccessLevel:
     """
     Rolls 1D100 and determines the level of success based on the character's stat.
 

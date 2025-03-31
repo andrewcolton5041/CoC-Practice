@@ -18,37 +18,47 @@ Last Updated: 03/31/2025
 import re
 import random
 import operator
-from typing import TypedDict, List
+from typing import TypedDict, List, Union, overload, Literal
 from src.constants import Dice, RegexFlags, ErrorMessages, MaxLimits
+
 
 class DiceResult(TypedDict):
     '''
     Dictionary to store the result of a dice roll
     '''
-    
+
     total: int
     rolls: List[int]
 
+# First overload: when return_details is False (default)
+@overload
+def roll_dice(dice_string: str, return_details: Literal[False] = False) -> int: ...
 
-def roll_dice(dice_string: str, return_details: bool = False) -> int | DiceResult:
+# Second overload: when return_details is True
+@overload
+def roll_dice(dice_string: str, return_details: Literal[True] = True) -> DiceResult: ...
+
+# Actual implementation
+def roll_dice(dice_string: str, return_details: bool = False) -> Union[int, DiceResult]:
     '''
     Rolls a set of dice based on the given dice string.
     Args:
         dice_string (str): A string representing the dice to be rolled.
+        return_details (bool): Whether to return just the total (False) or detailed results (True).
     Returns:
-        int: The total value of the rolled dice.
+        int | DiceResult: The total value of the rolled dice or a dictionary with total and individual rolls.
     Raises:
         ValueError: If the dice string is invalid.
     '''
-    
+
     #parse the dice string
     pattern = Dice.DicePattern.DICE_PATTERN
-    
+
     match = re.search(pattern, dice_string, RegexFlags.CASE_INSENSITIVE)
-    
+
     if not match:
         raise ValueError(f"{ErrorMessages.DICE_VALUE_ERROR}: '{dice_string}'")
-    
+
     num_dice = int(match.group(1))
     dice_sides = int(match.group(2))
     add_sub = match.group(4)
@@ -60,8 +70,8 @@ def roll_dice(dice_string: str, return_details: bool = False) -> int | DiceResul
         raise ValueError(f"{ErrorMessages.DICE_NUM_ERROR}: '{dice_string}'")
     #Check to see if the number of dice sides is within the limit
     if dice_sides > MaxLimits.MAX_DICE_SIDES:
-        raise ValueError(f"{ErrorMessages.DICE_SIDES_ERROR}: '{dice_string}'")
-    
+        raise ValueError(f"{ErrorMessages.DICE_SIDE_ERROR}: '{dice_string}'")
+
     #roll the dice
     rolls = [random.randint(1, dice_sides) for _ in range(num_dice)]
     total = sum(rolls)
@@ -76,6 +86,6 @@ def roll_dice(dice_string: str, return_details: bool = False) -> int | DiceResul
     #return the result
 
     if return_details:
-        return {"total" : total, "rolls" : rolls}
+        return {"total": total, "rolls": rolls}
     else:
         return total
