@@ -30,8 +30,13 @@ class Dice:
   '''
   Class for the dice in Call of Cthulhu
   '''
-  
-  PERCENTILE_DIE = "1D100"  # Constant for the percentile die
+
+  class BasicDice(Enum):
+    '''
+    Enum for the basic dices in Call of Cthulhu
+    '''
+    PERCENTILE_DIE = "1D100"  # Constant for the percentile die
+    DFOUR = "1D4"  # Constant for the d4 die
 
   class DicePattern:
     DICE_PATTERN = r"""^\(?                   # Optional opening parenthesis
@@ -42,7 +47,8 @@ class Dice:
        $                      # End of string
     """ # Constant for the dice pattern
     
-
+  class DamageBonusDice:
+    ONE_BONUS_DICE = "+1D4" # Constant for one 1D4 bonus dice
 
 class FumbleBoundaries:
   '''
@@ -69,6 +75,7 @@ class RegexFlags:
   """
   
   CASE_INSENSITIVE = re.I # Constant for case insensitive regex flag
+  VERBOSE = re.X # Constant for verbose regex flag
 
 
 class ErrorMessages:
@@ -79,7 +86,39 @@ class ErrorMessages:
   DICE_VALUE_ERROR = "Invalid dice string format" # Constant for the error message for invalid dice string format
   DICE_NUM_ERROR = "Invalid number of dice" # Constant for the error message for invalid number of dice
   DICE_SIDE_ERROR = "Invalid number of sides" # Constant for the error message for invalid number of sides
+  @staticmethod
+  def skill_value_not_found(skill_name: str):
+    return f"Skill or attribute '{skill_name}' not found for this character" # Constant for the error message for skill or attribute not found for this character
 
 class MaxLimits:
+  '''
+  Class for the maximum limits used in Call of Cthulhu
+  '''
   MAX_DICE_NUM = 100  # Constant for the maximum number of dice
   MAX_DICE_SIDES = 100  # Constant for the maximum number of dice sides
+
+class OtherConstants:
+  '''
+  Class for other constants used in Call of Cthulhu
+  '''
+  
+  NONE = None  # Constant for None value
+
+class CharacterSheetKeys:
+  '''
+  Class for the character sheet constants used in Call of Cthulhu
+  '''
+
+  SKILLS = "skills"  # Constant for the skills key in the character sheet
+  ATTRIBUTES = "attributes"  # Constant for the attributes key in the character sheet
+  DAMAGE = "damage"  # Constant for the damage key in the weapon data
+
+class CharacterUtils:
+  @staticmethod
+  def opposed_check_win(name: str, margin: bool) -> str:
+    if margin:
+      return "%s wins the opposed check! (Better Margin)" % name
+    else: 
+      return "%s wins the opposed check!" % name
+
+  OPP_CHECK_TIE = "The opposed check results in a tie"

@@ -31,7 +31,7 @@ def improvement_check(stat: int)-> bool:
     Returns:
         bool: True if the check succeeds (roll > stat), False otherwise.
     """
-    return dr.roll_dice(Dice.PERCENTILE_DIE, False) > stat
+    return dr.roll_dice(Dice.BasicDice.PERCENTILE_DIE.value, False) > stat
 
 def success_check(stat: int) -> SuccessLevel:
     """
@@ -52,7 +52,7 @@ def success_check(stat: int) -> SuccessLevel:
         str: One of: "Extreme Success", "Hard Success", "Regular Success", "Failure", or "Fumble"
     """
     # Roll a d100
-    roll = dr.roll_dice(Dice.PERCENTILE_DIE)
+    roll = dr.roll_dice(Dice.BasicDice.PERCENTILE_DIE.value)
 
     # Check for Extreme Success (Critical) - 1/5 of skill value
     if roll <= stat / HalfFifth.FIFTH_VALUE:
